@@ -347,7 +347,12 @@ function findStacks(buf: Buffer, invStart: number, invEnd: number) {
 
 **Note:** No package/version/security claims are assumed — this phase adds no dependencies.
 
-## Open Questions
+## Open Questions (RESOLVED — recommendations wired into 02-0x-PLAN.md)
+
+> All three carry an explicit recommendation that the plans implement: GP-required fail-loud
+> (02-03), flat stack list keyed by offset (02-04), duplicate-IDs-are-distinct-fields not
+> D-03-ambiguity (02-04). Each remains a Phase-5 / varied-fixture watch-point (D-04), not a
+> planning blocker.
 
 1. **Multi-currency wallets in other gamemodes**
    - What we know: fixture wallet = {GoldPieces, PrayerPoints, SlayerCoins}. Currency-by-ID handles any set.
