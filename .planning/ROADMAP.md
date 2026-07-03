@@ -29,7 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. A no-op load→save (decompress → zero edits → recompress) yields a decompressed buffer byte-identical to the input, and the codec asserts `output.length === input.length`, failing loudly if the invariant is ever violated.
   3. BinaryReader/Writer round-trips int32, int64 (BigInt), double, bool, and 7-bit-length UTF-8 strings against known .NET-produced bytes — including a ≥128-byte length prefix and a multi-byte UTF-8 string.
   4. All fixed-width numeric reads/writes are little-endian, and a wrong-width or wrong-endian write is caught by unit tests rather than silently corrupting adjacent bytes.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 01-01-PLAN.md — Toolchain + fixture scaffolding + devDep install (blocking human-verify checkpoint for SUS packages)
+- [ ] 01-02-PLAN.md — Brotli codec (src/codec.ts) + IO-03 round-trip + length invariant + bomb cap + large-window rejection
+- [ ] 01-03-PLAN.md — LE BinaryReader/Writer primitives + D-14 edge matrix + wrong-width/endian negatives + D-12 fixture slices
 
 ### Phase 2: Format Parser + FieldTable Model
 **Goal**: The core parses a real decompressed save — version → SaveHeader → entity list → Bank (wallet + item stacks) and skill ExperienceComponents — into a fresh-offset FieldTable and a JSON view model, with offsets re-derived on every load and never persisted.
