@@ -75,26 +75,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IO-01 | TBD | Pending |
-| IO-02 | TBD | Pending |
-| IO-03 | TBD | Pending |
-| BROWSE-01 | TBD | Pending |
-| BROWSE-02 | TBD | Pending |
-| BROWSE-03 | TBD | Pending |
-| BROWSE-04 | TBD | Pending |
-| BROWSE-05 | TBD | Pending |
-| EDIT-01 | TBD | Pending |
-| EDIT-02 | TBD | Pending |
-| EDIT-03 | TBD | Pending |
-| EDIT-04 | TBD | Pending |
-| SAFE-01 | TBD | Pending |
-| SAFE-02 | TBD | Pending |
+| IO-01 | Phase 2 | Pending |
+| IO-02 | Phase 4 | Pending |
+| IO-03 | Phase 1 | Pending |
+| BROWSE-01 | Phase 5 | Pending |
+| BROWSE-02 | Phase 5 | Pending |
+| BROWSE-03 | Phase 5 | Pending |
+| BROWSE-04 | Phase 5 | Pending |
+| BROWSE-05 | Phase 5 | Pending |
+| EDIT-01 | Phase 5 | Pending |
+| EDIT-02 | Phase 5 | Pending |
+| EDIT-03 | Phase 5 | Pending |
+| EDIT-04 | Phase 3 | Pending |
+| SAFE-01 | Phase 3 | Pending |
+| SAFE-02 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 14 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-07-03*
-*Last updated: 2026-07-03 after initial definition*
+*Last updated: 2026-07-03 after roadmap creation*
