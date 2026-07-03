@@ -33,11 +33,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. BinaryReader/Writer round-trips int32, int64 (BigInt), double, bool, and 7-bit-length UTF-8 strings against known .NET-produced bytes — including a ≥128-byte length prefix and a multi-byte UTF-8 string.
   4. All fixed-width numeric reads/writes are little-endian, and a wrong-width or wrong-endian write is caught by unit tests rather than silently corrupting adjacent bytes.
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 Plans:
 
 - [x] 01-01-PLAN.md — Toolchain + fixture scaffolding + devDep install (blocking human-verify checkpoint for SUS packages)
-- [ ] 01-02-PLAN.md — Brotli codec (src/codec.ts) + IO-03 round-trip + length invariant + bomb cap + large-window rejection
+- [x] 01-02-PLAN.md — Brotli codec (src/codec.ts) + IO-03 round-trip + length invariant + bomb cap + large-window rejection
 - [ ] 01-03-PLAN.md — LE BinaryReader/Writer primitives + D-14 edge matrix + wrong-width/endian negatives + D-12 fixture slices
 
 **Cross-cutting constraints:**
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Binary Primitives + Brotli Codec | 1/3 | In Progress|  |
+| 1. Binary Primitives + Brotli Codec | 2/3 | In Progress|  |
 | 2. Format Parser + FieldTable Model | 0/TBD | Not started | - |
 | 3. Patcher + Validation + XP Table | 0/TBD | Not started | - |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | 0/TBD | Not started | - |

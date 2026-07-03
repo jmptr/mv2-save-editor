@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: binary-primitives-brotli-codec
 status: executing
-stopped_at: Plan 01-01 complete (toolchain + fixture scaffolding)
-last_updated: "2026-07-03T19:24:46.624Z"
+stopped_at: Completed 01-02-PLAN.md (Brotli codec + IO-03 proven)
+last_updated: "2026-07-03T20:07:29.533Z"
 last_activity: 2026-07-03
-last_activity_desc: Plan 01-01 executed (toolchain + fixture scaffolding)
+last_activity_desc: Plan 01-02 executed (Brotli codec + IO-03 proven)
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
@@ -29,29 +29,30 @@ See: .planning/PROJECT.md (updated 2026-07-03)
 ## Current Position
 
 Phase: 01 (binary-primitives-brotli-codec) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
-Last activity: 2026-07-03 — Phase 01 execution started
+Last activity: 2026-07-03 — Plan 01-02 executed (Brotli codec + IO-03 proven)
 
-Progress: [███░░░░░░░] 33%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: 12 min
-- Total execution time: 0.2 hours
+- Total plans completed: 2
+- Average duration: 22 min
+- Total execution time: 0.7 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 P01 | 12min | 3 tasks | 5 files |
+| 01 P02 | 32min | 2 tasks | 2 files |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (12min)
+- Last 5 plans: 01-01 (12min), 01-02 (32min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -70,6 +71,10 @@ Recent decisions affecting current work:
 - [Phase ?]: Plan 01-01: Added types:[node] to tsconfig — TS 6 no longer auto-includes @types/* by default; required for Buffer/node:test/node:assert/strict to resolve under strict mode
 - [Phase ?]: Plan 01-01: Did NOT approve esbuild postinstall (npm allow-scripts) — tsx works without it (prebuilt binary); least-privilege supply-chain stance
 - [Phase ?]: Plan 01-01: Did NOT mark IO-03 complete — IO-03 (no-op round-trip + length invariant) is the codec requirement owned by Plan 02; Plan 01-01 only scaffolded the toolchain
+- [Phase ?]: Plan 01-02: Brotli param constants via zlib.constants.BROTLI_PARAM_* (named node:zlib export does not exist in Node 24 — used named imports + constants.BROTLI_PARAM_LARGE_WINDOW)
+- [Phase ?]: Plan 01-02: Named imports for node:zlib + node:assert/strict (not default) to eliminate esbuild __toESM interop helper and satisfy the D-04 --100 branch gate
+- [Phase ?]: Plan 01-02: Targeted /* c8 ignore */ comments suppress the residual esbuild __copyProps defensive arm (NOT codec logic — proven via pure-CJS probe); did NOT lower the --100 threshold
+- [Phase ?]: Plan 01-02: IO-03 COMPLETE — codec round-trips the real .sav byte-identical (decompressed-buffer) + length invariant (2,284,747) + large-window rejection (T-1-05) + bomb cap (T-1-03); 100% lines+branches on src/codec.ts
 
 ### Pending Todos
 
@@ -90,6 +95,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-03T19:23:17.216Z
-Stopped at: Plan 01-01 complete (toolchain + fixture scaffolding); ready for Plan 02
-Resume file: .planning/phases/01-binary-primitives-brotli-codec/01-01-SUMMARY.md
+Last session: 2026-07-03T20:06:47.557Z
+Stopped at: Completed 01-02-PLAN.md (Brotli codec + IO-03 proven)
+Resume file: None
