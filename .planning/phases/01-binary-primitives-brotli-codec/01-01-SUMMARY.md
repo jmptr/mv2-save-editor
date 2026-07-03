@@ -57,28 +57,28 @@ coverage:
   - id: D1
     description: "Full-strict tsconfig.json with noUncheckedIndexedAccess (D-08) + CommonJS module (D-06)"
     verification:
-      - kind: automated
+      - kind: other
         ref: "npx tsc --noEmit exits 0 (strict + noUncheckedIndexedAccess enforced); grep '\"noUncheckedIndexedAccess\": true' tsconfig.json"
         status: pass
     human_judgment: false
   - id: D2
     description: "package.json keeps type:commonjs (D-06) + declares typescript/tsx/c8/@types/node devDeps + test/typecheck scripts (D-01/D-07)"
     verification:
-      - kind: automated
+      - kind: other
         ref: "node -e require('./package.json') — scripts.test='tsx --test test/**/*.test.ts', scripts.typecheck='tsc --noEmit', devDependencies present, type='commonjs'"
         status: pass
     human_judgment: false
   - id: D3
     description: "test/fixtures/test-fixture.sav committed (D-10/D-11) — real .NET save, valid Brotli, decompresses to 2,284,747 bytes (move did not corrupt)"
     verification:
-      - kind: automated
+      - kind: other
         ref: "git status shows rename docs/test-fixture.sav -> test/fixtures/test-fixture.sav; node -e brotliDecompressSync(readFileSync('test/fixtures/test-fixture.sav')).length === 2284747"
         status: pass
     human_judgment: false
   - id: D4
     description: "Toolchain green: tsx --test runs node:test on .test.ts (D-01/D-07), tsc --noEmit passes strict config (D-05/D-08), c8 runs"
     verification:
-      - kind: automated
+      - kind: other
         ref: "npx tsx --test test/scaffold.test.ts (1 pass, exit 0); npx tsc --noEmit (exit 0); npx c8 --100 --include 'src/**' tsx --test (exit 0, no src/ yet)"
         status: pass
     human_judgment: false

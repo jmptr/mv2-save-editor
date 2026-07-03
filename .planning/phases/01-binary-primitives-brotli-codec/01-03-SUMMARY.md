@@ -67,10 +67,10 @@ coverage:
       - kind: unit
         ref: "test/primitives.test.ts#string round-trip at 7-bit boundaries (len 0/1/127/128/16383/16384 + 4-byte emoji)"
         status: pass
-      - kind: automated
+      - kind: other
         ref: "npx c8 --100 --include 'src/binary-reader.ts' --include 'src/binary-writer.ts' --exclude 'test/**' tsx --test test/primitives.test.ts → 100% lines/statements/functions/branches (D-04 gate)"
         status: pass
-      - kind: automated
+      - kind: other
         ref: "npx tsc --noEmit → exit 0 (strict + noUncheckedIndexedAccess, D-07/D-08)"
         status: pass
     human_judgment: false

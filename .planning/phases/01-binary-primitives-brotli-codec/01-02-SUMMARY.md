@@ -70,10 +70,10 @@ coverage:
       - kind: unit
         ref: "test/codec.test.ts#idempotent decompress"
         status: pass
-      - kind: automated
+      - kind: other
         ref: "npx c8 --100 --include 'src/codec.ts' --exclude 'test/**' tsx --test test/codec.test.ts → 100% lines/statements/functions/branches (D-04 gate)"
         status: pass
-      - kind: automated
+      - kind: other
         ref: "npx tsc --noEmit → exit 0 (strict + noUncheckedIndexedAccess, D-07/D-08)"
         status: pass
     human_judgment: false
