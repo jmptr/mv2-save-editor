@@ -1,0 +1,10 @@
+{
+  "permission": {
+    "read": {
+      "/home/jm/projects/mv2-save-editor/.opencode/gsd-core/*": "allow"
+    },
+    "external_directory": {
+      "/home/jm/projects/mv2-save-editor/.opencode/gsd-core/*": "allow"
+    }
+  }
+}
