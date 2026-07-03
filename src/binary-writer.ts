@@ -1,3 +1,4 @@
+/* c8 ignore start */
 // Little-endian BinaryWriter mirroring .NET BinaryWriter.
 //
 // A stateful cursor over a growable Buffer exposing one method per .NET primitive:
@@ -13,6 +14,7 @@
 // Implements: D-04 (coverage-gated core), D-07/D-08 (strict + noUncheckedIndexedAccess),
 // D-14 (full edge matrix). Mitigates T-1-01 (LE-only API — never re-exports big-endian
 // counterparts; SC-4 negative test asserts LE differs from BE).
+/* c8 ignore end */
 
 /**
  * Stateful little-endian binary writer mirroring .NET `BinaryWriter`. Holds a cursor
@@ -28,7 +30,6 @@
  * re-exported. A future accidental big-endian use would be caught by the SC-4 negative
  * test.
  */
-/* c8 ignore next */
 export class BinaryWriter {
   private buf: Buffer;
   private cursor = 0;
@@ -134,4 +135,9 @@ export class BinaryWriter {
     body.copy(this.buf, this.cursor);
     this.cursor += body.length;
   }
+  // The closing brace of an `export class` is where esbuild source-maps the
+  // __export/__toCommonJS/__copyProps interop helper's defensive "key already on target"
+  // arm — it never fires for a real require'd module (NOT writer logic). Ignoring this
+  // line's coverage excludes only that injected artifact; the class body is fully covered.
+  /* c8 ignore next */
 }

@@ -1,3 +1,4 @@
+/* c8 ignore start */
 // Little-endian BinaryReader mirroring .NET BinaryReader.
 //
 // A stateful cursor over a Buffer exposing one method per .NET primitive: int32 (4B),
@@ -13,6 +14,7 @@
 // uses readUInt8 not buf[i] indexing), D-13 (no .NET SDK), D-14 (full edge matrix). Mitigates
 // T-1-02 (7-bit overflow -> RangeError at shift >= 35) and T-1-04 (Buffer.readXxxLE throws
 // ERR_OUT_OF_RANGE natively on OOB — no silent undefined read).
+/* c8 ignore end */
 
 /**
  * Stateful little-endian binary reader mirroring .NET `BinaryReader`. Holds a cursor
@@ -28,7 +30,6 @@
  * LE-only API (T-1-01/SC-4 mitigation): no big-endian read methods are exposed. A future
  * accidental big-endian use would be caught by the SC-4 negative test.
  */
-/* c8 ignore next */
 export class BinaryReader {
   private cursor = 0;
 
@@ -131,4 +132,9 @@ export class BinaryReader {
     this.cursor += len;
     return this.buf.subarray(start, this.cursor).toString('utf8');
   }
+  // The closing brace of an `export class` is where esbuild source-maps the
+  // __export/__toCommonJS/__copyProps interop helper's defensive "key already on target"
+  // arm — it never fires for a real require'd module (NOT reader logic). Ignoring this
+  // line's coverage excludes only that injected artifact; the class body is fully covered.
+  /* c8 ignore next */
 }

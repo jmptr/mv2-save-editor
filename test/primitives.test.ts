@@ -323,3 +323,147 @@ describe('multi-write sequence round-trips', () => {
     assert.equal(r.offset, w.offset, 'reader consumed exactly what writer wrote');
   });
 });
+
+// ===========================================================================
+// NEGATIVE TESTS (SC-4 + T-1-04 + T-1-02) — backstop edges that must FAIL loudly,
+// never silently corrupt. Appended in Task 2 to cover the reader's throw arms.
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// wrong-width write caught (SC-4, T-1-01)
+// ---------------------------------------------------------------------------
+
+describe('wrong-width write caught (SC-4, T-1-01)', () => {
+  test('writing int32 into an int64 slot is detectable (sign corruption)', () => {
+    // Demonstrate that Buffer.writeInt32LE on an 8-byte slot leaves the high 4 bytes
+    // untouched — a silent width mismatch. For a negative value, the zero-padding
+    // corrupts the sign: int32 -1 (0xffffffff) read back as int64 becomes 4294967295n
+    // (positive), NOT -1n. The BinaryWriter's per-method width prevents this at the
+    // API level (writeInt32 writes exactly 4 bytes; writeInt64 writes exactly 8).
+    const buf = Buffer.alloc(8, 0);
+    buf.writeInt32LE(-1, 0); // WRONG: only writes 4 of 8 bytes; high 4 stay zero
+    const corrupted = buf.readBigInt64LE(0);
+    assert.notEqual(
+      corrupted,
+      -1n,
+      'int32-into-int64-slot corruption must be detectable (sign corrupted)',
+    );
+    assert.equal(
+      corrupted,
+      4294967295n,
+      'sign corrupted: int32 -1 zero-padded into int64 becomes 4294967295 (positive)',
+    );
+
+    // Proper int64 write: BinaryWriter.writeInt64(-1n) emits all 8 bytes correctly —
+    // the per-method-width API is the T-1-01 mitigation (no wrong-width path exists).
+    const w = new BinaryWriter();
+    w.writeInt64(-1n);
+    assert.equal(w.toBuffer().toString('hex'), 'ffffffffffffffff', 'writeInt64 emits 8 bytes');
+    assert.equal(w.toBuffer().readBigInt64LE(0), -1n, 'proper int64 round-trip preserves sign');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// wrong-endian write caught (SC-4, T-1-01)
+// ---------------------------------------------------------------------------
+
+describe('wrong-endian write caught (SC-4, T-1-01)', () => {
+  test('LE (01000000) differs from BE (00000001) for int32 1 — LE is the .NET format', () => {
+    const le = Buffer.alloc(4);
+    le.writeInt32LE(1, 0); // .NET / BinaryWriter format
+    const be = Buffer.alloc(4);
+    be.writeInt32BE(1, 0); // big-endian — wrong for .NET
+
+    // LE and BE produce different bytes; a future accidental big-endian use is detectable.
+    assert.notDeepStrictEqual(le, be, 'LE and BE must differ');
+    assert.equal(le.toString('hex'), '01000000', '.NET int32 1 is LE 01000000');
+    assert.equal(be.toString('hex'), '00000001', 'big-endian int32 1 is 00000001 (wrong for .NET)');
+
+    // BinaryWriter exposes ONLY writeInt32LE (never writeInt32BE) — the LE-only API is
+    // the T-1-01/SC-4 mitigation: no big-endian write path exists.
+    const w = new BinaryWriter();
+    w.writeInt32(1);
+    assert.equal(w.toBuffer().toString('hex'), '01000000', 'BinaryWriter emits LE only');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// out-of-bounds read throws (T-1-04)
+// ---------------------------------------------------------------------------
+
+describe('out-of-bounds read throws (T-1-04)', () => {
+  test('Buffer.readInt32LE throws a buffer-access RangeError past end (not silent undefined)', () => {
+    const buf = Buffer.alloc(4); // only 4 bytes
+    // Reading at offset === length (one past the last valid byte) must throw, not
+    // silently return undefined (which noUncheckedIndexedAccess would catch at
+    // typecheck time for buf[i] indexing, but readInt32LE enforces it at runtime).
+    // Node throws ERR_OUT_OF_RANGE or ERR_BUFFER_OUT_OF_BOUNDS depending on the
+    // access pattern; both are buffer-access RangeErrors that prevent silent reads.
+    assert.throws(
+      () => buf.readInt32LE(buf.length),
+      (err: unknown) =>
+        err instanceof RangeError &&
+        /ERR_OUT_OF_RANGE|ERR_BUFFER_OUT_OF_BOUNDS|outside buffer/i.test(String(err)),
+      'Buffer.readInt32LE must throw past end (T-1-04)',
+    );
+  });
+
+  test('BinaryReader on a too-short buffer throws when reading past the end', () => {
+    const r = new BinaryReader(Buffer.alloc(2)); // only 2 bytes — int32 needs 4
+    assert.throws(
+      () => r.readInt32(),
+      (err: unknown) =>
+        err instanceof RangeError &&
+        /ERR_OUT_OF_RANGE|ERR_BUFFER_OUT_OF_BOUNDS|outside buffer/i.test(String(err)),
+      'BinaryReader.readInt32 must throw on a too-short buffer (T-1-04)',
+    );
+  });
+
+  test('BinaryReader.readBool throws ERR_BUFFER_OUT_OF_BOUNDS on an empty buffer', () => {
+    const r = new BinaryReader(Buffer.alloc(0));
+    // readUInt8 on a zero-length buffer throws ERR_BUFFER_OUT_OF_BOUNDS (Node's code for
+    // empty-buffer access; readInt32LE past end throws ERR_OUT_OF_RANGE — both are
+    // buffer-access RangeErrors, both prevent the silent-undefined read T-1-04 forbids).
+    assert.throws(
+      () => r.readBool(),
+      (err: unknown) =>
+        err instanceof RangeError &&
+        /ERR_OUT_OF_RANGE|ERR_BUFFER_OUT_OF_BOUNDS|outside buffer/i.test(String(err)),
+      'readBool must throw on an empty buffer (T-1-04)',
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 7-bit length-prefix overflow + declared-length overrun (T-1-02)
+// ---------------------------------------------------------------------------
+
+describe('7-bit length-prefix overflow throws (T-1-02)', () => {
+  test('a 6-byte prefix (0x80 x5 + 0x01) causes readString to throw RangeError', () => {
+    // A valid .NET length prefix maxes at 5 bytes (35 bits — enough for any int32
+    // length). A 6th byte (shift reaches 35) indicates a malformed prefix; reject it
+    // loudly rather than allowing a giant allocation or a corrupt wrapped shift.
+    const malformed = Buffer.from([0x80, 0x80, 0x80, 0x80, 0x80, 0x01]);
+    const r = new BinaryReader(malformed);
+    assert.throws(
+      () => r.readString(),
+      (err: unknown) =>
+        err instanceof RangeError && /exceeds 5 bytes|T-1-02/i.test(String(err)),
+      'readString must reject a >5-byte length prefix (T-1-02, >2GiB cap)',
+    );
+  });
+
+  test('a declared length greater than the remaining buffer throws RangeError', () => {
+    // Prefix declares 100 bytes of body but only 0 bytes follow — the bounds check
+    // must throw, not silently return a truncated string via subarray.
+    const malformed = Buffer.from([100]); // prefix byte: len=100 (0x64), no body
+    const r = new BinaryReader(malformed);
+    assert.throws(
+      () => r.readString(),
+      (err: unknown) =>
+        err instanceof RangeError && /exceeds remaining buffer/i.test(String(err)),
+      'readString must reject a declared length exceeding the remaining buffer',
+    );
+  });
+});
+
