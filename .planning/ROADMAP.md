@@ -38,7 +38,7 @@ Plans:
 
 - [x] 01-01-PLAN.md — Toolchain + fixture scaffolding + devDep install (blocking human-verify checkpoint for SUS packages)
 - [x] 01-02-PLAN.md — Brotli codec (src/codec.ts) + IO-03 round-trip + length invariant + bomb cap + large-window rejection
-- [ ] 01-03-PLAN.md — LE BinaryReader/Writer primitives + D-14 edge matrix + wrong-width/endian negatives + D-12 fixture slices
+- [x] 01-03-PLAN.md — LE BinaryReader/Writer primitives + D-14 edge matrix + wrong-width/endian negatives + D-12 fixture slices
 
 **Cross-cutting constraints:**
 
