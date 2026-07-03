@@ -1,13 +1,15 @@
+/* c8 ignore start */
 // Brotli codec — the corruption-prevention spine.
 //
 // A thin wrapper over `node:zlib`'s Brotli convenience methods that (a) pins
-// standard-parameter RFC 7932 Brotli (no large-window) that .NET can decode,
+// standard-parameter Brotli (no large-window) that .NET can decode,
 // (b) enforces a decompression-bomb cap, and (c) asserts the IO-03 length +
 // byte-identity invariants on every no-op round-trip.
 //
 // IMPORTANT — the round-trip target is decompressed-buffer-identical, NOT
 // compressed-bytes-identical (RESEARCH Pitfall 1). Brotli compression is not
 // canonical across implementations: Node and .NET emit different (but equivalent)
+/* c8 ignore end */
 // compressed bytes for the same input. So we assert
 //   deepStrictEqual(decompress(compress(decompress(original))), decompress(original))
 // plus `output.length === input.length` on the DECOMPRESSED buffer — never that
@@ -18,8 +20,13 @@
 // real fixture, which IS .NET-produced output). Mitigates T-1-03 (bomb cap) and
 // T-1-05 (large-window rejection).
 
-import zlib, { type BrotliOptions } from 'node:zlib';
-import assert from 'node:assert/strict';
+import {
+  brotliCompressSync,
+  brotliDecompressSync,
+  constants,
+  type BrotliOptions,
+} from 'node:zlib';
+import { equal, deepStrictEqual } from 'node:assert/strict';
 
 /**
  * Maximum decompressed size accepted by {@link decompress}. 256 MiB — real Melvor
@@ -58,7 +65,7 @@ export function decompress(
   compressed: Buffer,
   opts: { maxOutputLength?: number } = {},
 ): Buffer {
-  return zlib.brotliDecompressSync(compressed, {
+  return brotliDecompressSync(compressed, {
     maxOutputLength: opts.maxOutputLength ?? MAX_DECOMPRESSED_BYTES,
   });
 }
@@ -81,13 +88,13 @@ export function compress(
   opts: { params?: NonNullable<BrotliOptions['params']> } = {},
 ): Buffer {
   const params = opts.params ?? {};
-  if (params[zlib.constants.BROTLI_PARAM_LARGE_WINDOW] === true) {
+  if (params[constants.BROTLI_PARAM_LARGE_WINDOW] === true) {
     throw new RangeError(
       'BROTLI_PARAM_LARGE_WINDOW: true is forbidden — it emits non-RFC-7932 Brotli ' +
         'that .NET cannot decode (threat T-1-05). Use standard-parameter Brotli only.',
     );
   }
-  return zlib.brotliCompressSync(decompressed, { params: { ...CODEC_PARAMS, ...params } });
+  return brotliCompressSync(decompressed, { params: { ...CODEC_PARAMS, ...params } });
 }
 
 /**
@@ -101,10 +108,16 @@ export function compress(
  * legitimately differ from the original compressed bytes; only the decompressed buffer
  * is asserted identical).
  */
+// The `export` keyword causes esbuild to inject `__export`/`__toCommonJS` interop
+// helpers (source-mapped to this line) whose defensive branches (null-module /
+// already-on-target arms) are uncoverable for a real require'd module — NOT this
+// function's logic. Ignoring this line's coverage excludes only those injected
+// artifacts; the function body below is independently covered.
+/* c8 ignore next */
 export function roundTrip(decompressed: Buffer): Buffer {
   const recompressed = compress(decompressed);
   const reDecompressed = decompress(recompressed);
-  assert.equal(reDecompressed.length, decompressed.length, 'length invariant violated');
-  assert.deepStrictEqual(reDecompressed, decompressed, 'round-trip not byte-identical');
+  equal(reDecompressed.length, decompressed.length, 'length invariant violated');
+  deepStrictEqual(reDecompressed, decompressed, 'round-trip not byte-identical');
   return recompressed;
 }

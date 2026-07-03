@@ -134,7 +134,7 @@ describe('idempotent decompress', () => {
   });
 });
 
-describe('roundTrip throws on length-invariant violation', () => {
+describe('roundTrip throws on invariant violation', () => {
   test('a length mismatch causes roundTrip to throw loudly (never silently corrupt)', () => {
     const decompressed = decompress(fixtureCompressed);
 
@@ -161,5 +161,30 @@ describe('roundTrip throws on length-invariant violation', () => {
     // Sanity: after restore, roundTrip works again (the mock did not leak).
     const ok = roundTrip(decompressed);
     assert.ok(ok.length > 0, 'roundTrip works again after mock restore');
+  });
+
+  test('a byte-identity violation (lengths match, bytes differ) causes roundTrip to throw', () => {
+    const decompressed = decompress(fixtureCompressed);
+
+    // Cover the deepStrictEqual throw arm: assert.equal passes (lengths match) but the
+    // bytes differ → deepStrictEqual throws. Build a same-length tampered buffer (flip
+    // the last byte), compress it, and stub brotliCompressSync to return that stream.
+    const tampered = Buffer.from(decompressed); // copy, same length
+    const lastIdx = tampered.length - 1;
+    // Use Buffer.readUInt8/writeUInt8 (throw on OOB, return non-optional number) rather
+    // than `tampered[i]` indexing — RESEARCH Pitfall 7 + D-08 noUncheckedIndexedAccess.
+    tampered.writeUInt8((tampered.readUInt8(lastIdx) ^ 0xff) & 0xff, lastIdx); // flip last byte
+    const tamperedCompressed = zlib.brotliCompressSync(tampered);
+
+    mock.method(zlib, 'brotliCompressSync', () => tamperedCompressed);
+    try {
+      assert.throws(
+        () => roundTrip(decompressed),
+        (err: unknown) => /round-trip not byte-identical/i.test(String(err)),
+        'roundTrip must throw loudly when byte-identity is violated',
+      );
+    } finally {
+      mock.restoreAll();
+    }
   });
 });
