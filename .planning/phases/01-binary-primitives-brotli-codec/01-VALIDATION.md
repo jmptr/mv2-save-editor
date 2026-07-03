@@ -2,7 +2,7 @@
 phase: 1
 slug: binary-primitives-brotli-codec
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-07-03
 ---
@@ -39,33 +39,41 @@ created: 2026-07-03
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 1-01-01 | 01 | 0 | IO-03 SC-1 | — | N/A | unit (golden fixture) | `npx tsx --test test/codec.test.ts -t 'real fixture round-trips'` | ❌ W0 | ⬜ pending |
-| 1-01-02 | 01 | 0 | IO-03 SC-2 | — | fail loudly on length invariant | unit (invariant) | `npx tsx --test test/codec.test.ts -t 'length invariant'` | ❌ W0 | ⬜ pending |
-| 1-02-01 | 02 | 1 | SC-3 int32 | T-1-01 | reject wrong-width write | unit | `npx tsx --test test/primitives.test.ts -t 'int32'` | ❌ W0 | ⬜ pending |
-| 1-02-02 | 02 | 1 | SC-3 int64 | T-1-01 | BigInt LE, no precision loss | unit | `npx tsx --test test/primitives.test.ts -t 'int64'` | ❌ W0 | ⬜ pending |
-| 1-02-03 | 02 | 1 | SC-3 double | — | NaN/-0/Inf bit-pattern round-trip | unit | `npx tsx --test test/primitives.test.ts -t 'double'` | ❌ W0 | ⬜ pending |
-| 1-02-04 | 02 | 1 | SC-3 bool | — | 1-byte 0/1 | unit | `npx tsx --test test/primitives.test.ts -t 'bool'` | ❌ W0 | ⬜ pending |
-| 1-02-05 | 02 | 1 | SC-3 string | T-1-02 | 7-bit length prefix reject >5 bytes | unit | `npx tsx --test test/primitives.test.ts -t 'string'` | ❌ W0 | ⬜ pending |
-| 1-02-06 | 02 | 1 | SC-4 wrong-width | T-1-01 | detect width mismatch loudly | unit (negative) | `npx tsx --test test/primitives.test.ts -t 'wrong-width'` | ❌ W0 | ⬜ pending |
-| 1-02-07 | 02 | 1 | SC-4 wrong-endian | T-1-01 | LE ≠ BE, never re-export BE | unit (negative) | `npx tsx --test test/primitives.test.ts -t 'wrong-endian'` | ❌ W0 | ⬜ pending |
-| 1-02-08 | 02 | 1 | D-12 slice | — | real .NET bytes byte-match | unit (golden slice) | `npx tsx --test test/primitives.test.ts -t 'fixture slice'` | ❌ W0 | ⬜ pending |
-| 1-03-01 | 03 | 2 | D-04 coverage | — | 100% lines on src/{codec,binary-reader,binary-writer}.ts | coverage | `npx c8 --100 --include 'src/**' tsx --test test/**/*.test.ts` | ❌ W0 | ⬜ pending |
-| 1-03-02 | 03 | 2 | D-07/D-08 typecheck | — | strict + noUncheckedIndexedAccess | typecheck | `npx tsc --noEmit` | ❌ W0 | ⬜ pending |
+| 1-01-01 | 01 | 0 | IO-03 (toolchain) | — | N/A | unit (smoke) | `npx tsx --test test/scaffold.test.ts` | ❌ W0 | ⬜ pending |
+| 1-01-02 | 01 | 0 | IO-03 (fixture) | — | fixture is valid Brotli stream | unit (golden fixture) | `node -e "require('node:zlib').brotliDecompressSync(require('node:fs').readFileSync('test/fixtures/test-fixture.sav'))"` | ❌ W0 | ⬜ pending |
+| 1-01-03 | 01 | 0 | IO-03 (typecheck) | — | strict + noUncheckedIndexedAccess active | typecheck | `npx tsc --noEmit` | ❌ W0 | ⬜ pending |
+| 1-01-04 | 01 | 0 | IO-03 (supply chain) | T-1-SC | devDep legitimacy gate (tsx + @types/node SUS false-positive) | checkpoint (human-verify) | (Plan 01 Task 2 — six `npm view` checks) | ❌ W0 | ⬜ pending |
+| 1-02-01 | 02 | 1 | IO-03 SC-1 | — | byte-identical decompressed round-trip | unit (golden fixture) | `npx tsx --test test/codec.test.ts -t 'real fixture round-trips'` | ❌ W1 | ⬜ pending |
+| 1-02-02 | 02 | 1 | IO-03 SC-2 | — | length invariant fail-loud | unit (invariant) | `npx tsx --test test/codec.test.ts -t 'length invariant'` | ❌ W1 | ⬜ pending |
+| 1-02-03 | 02 | 1 | IO-03 (per-quality) | — | decompressed-buffer-identical across qualities | unit | `npx tsx --test test/codec.test.ts -t 'per-quality'` | ❌ W1 | ⬜ pending |
+| 1-02-04 | 02 | 1 | IO-03 (bomb cap) | T-1-03 | maxOutputLength enforced | unit (negative) | `npx tsx --test test/codec.test.ts -t 'bomb'` | ❌ W1 | ⬜ pending |
+| 1-02-05 | 02 | 1 | IO-03 (large-window) | T-1-05 | large-window param rejected | unit (negative) | `npx tsx --test test/codec.test.ts -t 'large-window'` | ❌ W1 | ⬜ pending |
+| 1-02-06 | 02 | 1 | D-04 coverage | — | 100% lines on src/codec.ts | coverage | `npx c8 --100 --include 'src/codec.ts' --exclude 'test/**' tsx --test test/codec.test.ts` | ❌ W1 | ⬜ pending |
+| 1-02-07 | 02 | 1 | D-07/D-08 typecheck | — | strict + noUncheckedIndexedAccess | typecheck | `npx tsc --noEmit` | ❌ W1 | ⬜ pending |
+| 1-03-01 | 03 | 1 | SC-3 int32 | T-1-01 | reject wrong-width write | unit | `npx tsx --test test/primitives.test.ts -t 'int32'` | ❌ W1 | ⬜ pending |
+| 1-03-02 | 03 | 1 | SC-3 int64 | T-1-01 | BigInt LE, no precision loss | unit | `npx tsx --test test/primitives.test.ts -t 'int64'` | ❌ W1 | ⬜ pending |
+| 1-03-03 | 03 | 1 | SC-3 double | — | NaN/-0/Inf bit-pattern round-trip | unit | `npx tsx --test test/primitives.test.ts -t 'double'` | ❌ W1 | ⬜ pending |
+| 1-03-04 | 03 | 1 | SC-3 bool | — | 1-byte 0/1 | unit | `npx tsx --test test/primitives.test.ts -t 'bool'` | ❌ W1 | ⬜ pending |
+| 1-03-05 | 03 | 1 | SC-3 string | T-1-02 | 7-bit length prefix reject >5 bytes | unit | `npx tsx --test test/primitives.test.ts -t 'string'` | ❌ W1 | ⬜ pending |
+| 1-03-06 | 03 | 1 | SC-4 wrong-width | T-1-01 | detect width mismatch loudly | unit (negative) | `npx tsx --test test/primitives.test.ts -t 'wrong-width'` | ❌ W1 | ⬜ pending |
+| 1-03-07 | 03 | 1 | SC-4 wrong-endian | T-1-01 | LE ≠ BE, never re-export BE | unit (negative) | `npx tsx --test test/primitives.test.ts -t 'wrong-endian'` | ❌ W1 | ⬜ pending |
+| 1-03-08 | 03 | 1 | D-12 slice | — | real .NET bytes byte-match | unit (golden slice) | `npx tsx --test test/primitives.test.ts -t 'fixture slice'` | ❌ W1 | ⬜ pending |
+| 1-03-09 | 03 | 1 | D-04 coverage | — | 100% lines on src/binary-reader.ts + src/binary-writer.ts | coverage | `npx c8 --100 --include 'src/binary-reader.ts' --include 'src/binary-writer.ts' --exclude 'test/**' tsx --test test/primitives.test.ts` | ❌ W1 | ⬜ pending |
+| 1-03-10 | 03 | 1 | D-07/D-08 typecheck | — | strict + noUncheckedIndexedAccess | typecheck | `npx tsc --noEmit` | ❌ W1 | ⬜ pending |
 
-*Task IDs are provisional — finalized when PLAN.md files are written. Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Task IDs map to the actual PLAN.md decomposition: Plan 01 (Wave 0) = scaffold + fixture move + toolchain + human-verify checkpoint; Plan 02 (Wave 1) = codec + codec tests + coverage/typecheck gates (Task 2); Plan 03 (Wave 1) = primitives + primitives tests + coverage/typecheck gates (Task 2). `test/codec.test.ts` and `test/primitives.test.ts` are created via TDD as the first action step of their respective Wave 1 plans — they are NOT pre-stubbed in Wave 0 (Plan 01 creates only `test/scaffold.test.ts`). Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
 ---
 
 ## Wave 0 Requirements
 
 - [ ] `tsconfig.json` — full strict + `noUncheckedIndexedAccess: true` + `exactOptionalPropertyTypes` + `noImplicitOverride` + `target: ES2022` + `module: commonjs` + `moduleResolution: node` + `lib: ["ES2022"]` (D-05/D-06/D-08)
-- [ ] `test/codec.test.ts` — stubs for IO-03 SC-1, SC-2, per-quality round-trip
-- [ ] `test/primitives.test.ts` — stubs for SC-3, SC-4, D-12 fixture slices, D-14 edge matrix
+- [ ] `test/scaffold.test.ts` — trivial `node:test` smoke test proving `tsx --test` runs `.test.ts` files (Plan 01 Task 1)
 - [ ] `test/fixtures/test-fixture.sav` — moved from `docs/test-fixture.sav` per D-10, committed
 - [ ] `package.json` updates: `devDependencies` (typescript, tsx, c8, @types/node), `scripts.test` → `tsx --test`, `scripts.typecheck` → `tsc --noEmit`
 - [ ] Framework install: `npm i -D typescript@^6 tsx@^4 c8@^11 @types/node@^24` (with `checkpoint:human-verify` on tsx + @types/node per legitimacy protocol — false-positive "too-new" flags)
 
-*Greenfield phase — all infrastructure is Wave 0 work.*
+*`test/codec.test.ts` and `test/primitives.test.ts` are NOT Wave 0 stubs — they are created via TDD as the first action step of Plan 02 Task 1 and Plan 03 Task 1 respectively (Wave 1). Plan 01 explicitly does NOT pre-stub them (see 01-01-PLAN.md Task 1 action: "do NOT create ... test/codec.test.ts, or test/primitives.test.ts — Wave 1 plans own those"). The plans use TDD (test written as the first step of the implementation task) rather than pre-stubbing in Wave 0.*
 
 ---
 
@@ -108,11 +116,11 @@ created: 2026-07-03
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 6s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies (Plan 01 has automated verify on Task 1 + Task 3 and a checkpoint:human-verify on Task 2; Plans 02/03 have automated verify on every task)
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify (every task runs `npx tsx --test` / `npx tsc --noEmit` / `npx c8`)
+- [x] Wave 0 covers all MISSING references (tsconfig.json + package.json devDeps + test/scaffold.test.ts + fixture move + legitimacy checkpoint — Wave 1 plans create their own test files via TDD)
+- [x] No watch-mode flags (all commands are one-shot: `tsx --test`, `tsc --noEmit`, `c8 --100`)
+- [x] Feedback latency < 6s (~3–6s estimated: single fixture + in-memory primitive matrix)
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** validated — Per-Task Verification Map realigned to actual PLAN.md decomposition (Plan 01 Wave 0 = scaffold + fixture + toolchain + checkpoint; Plan 02 Wave 1 = codec + codec tests + coverage/typecheck; Plan 03 Wave 1 = primitives + primitives tests + coverage/typecheck). Test files created via TDD in Wave 1, not pre-stubbed in Wave 0.

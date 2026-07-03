@@ -486,22 +486,25 @@ for (const [label, value, hex] of INT64_VECTORS) {
 
 **All other claims** in this RESEARCH.md are `[VERIFIED: empirical]` (run on the real Node 24.18.0 runtime + the real fixture) or `[CITED: nodejs.org/api/zlib.html]` / `[CITED: learn.microsoft.com]` (official docs fetched this session). No `[ASSUMED]` claims affect Phase 1 correctness — the three above are explanatory-only or trivially falsifiable.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Exact Brotli params .NET used to produce the fixture (quality/lgwin)** —
    - What we know: Node default (q=11, lgwin=22, mode=GENERIC) produces 115,832 B; the fixture is 151,993 B; Node q=4 produces 152,799 B (very close → .NET likely used q≈4, its `CompressionLevel.Optimal` default).
    - What's unclear: the *exact* .NET encoder params. Irrelevant to Phase 1 (we use Node's encoder; .NET decodes any RFC 7932 stream).
    - Recommendation: Do NOT chase this. Pin Node's defaults explicitly in `CODEC_PARAMS` (defensive against future Node default changes) and move on.
+   - RESOLVED: Plan 02 Task 1 pins Node's defaults in `CODEC_PARAMS` (frozen empty params object = Node defaults: quality 11, lgwin 22, mode GENERIC, no large-window). The exact .NET encoder params are not chased.
 
 2. **Whether to use `fast-check` (property-based testing) for the primitive round-trips** —
    - What we know: CONTEXT.md locked `node:test` + `node:assert` + `c8` only. `fast-check` is an external devDep not in the locked decisions. The "use native Node" philosophy leans against extra deps, but `c8` is already an accepted external devDep.
    - What's unclear: whether property-based testing adds enough value over the enumerated D-14 edge matrix + a small hand-rolled seeded-random loop.
    - Recommendation: the agent's discretion — start with the enumerated D-14 matrix (no new dep), add `fast-check` only if Wave 0 reveals gaps the static matrix doesn't cover. See Validation Architecture §Property-based test ideas.
+   - RESOLVED: No `fast-check` dependency added. Plan 03 uses the enumerated D-14 edge matrix + D-12 fixture slices only (per CONTEXT.md A2 discretion). No Wave 0 gaps were revealed that would require property-based testing.
 
 3. **BinaryReader/Writer API shape: stateful cursor class vs pure offset functions** —
    - What we know: CONTEXT.md leaves this to the planner ("Phase 2's FieldTable will inform the ergonomic choice"). The spec (`docs/current-skill.md`) is written in a `.NET BinaryReader` (stateful cursor) mental model.
    - What's unclear: whether Phase 2's FieldTable will prefer stateful cursor or pure `(buf, offset) => [value, nextOffset]` functions.
    - Recommendation: Build BOTH a stateful `BinaryReader`/`BinaryWriter` class (mirrors .NET, matches the spec prose) AND export the underlying pure offset functions (`readInt32At(buf, offset)` etc.) so Phase 2 can choose. Tiny incremental cost; maximal Phase 2 flexibility.
+   - RESOLVED: Plan 03 ships the stateful `BinaryReader`/`BinaryWriter` class ONLY. The pure offset functions are deferred to Phase 2 — Phase 2's FieldTable will inform whether they're needed; adding them later is low-cost and reversible (v1 ships the stateful class only, matching the .NET `BinaryReader` mental model in `docs/current-skill.md`). Deviation from the "build BOTH" recommendation is documented here so it is auditable rather than invisible technical debt.
 
 ## Environment Availability
 
