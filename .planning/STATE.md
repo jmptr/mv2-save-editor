@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 1
-current_phase_name: Binary Primitives + Brotli Codec
+current_phase: 01
+current_phase_name: binary-primitives-brotli-codec
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-07-03T16:25:59.354Z"
+stopped_at: Plan 01-01 complete (toolchain + fixture scaffolding)
+last_updated: "2026-07-03T19:24:46.624Z"
 last_activity: 2026-07-03
-last_activity_desc: Roadmap created (5 phases, 14/14 v1 requirements mapped)
+last_activity_desc: Plan 01-01 executed (toolchain + fixture scaffolding)
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 33
 ---
 
 # Project State
@@ -24,34 +24,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-03)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** Phase 1 — Binary Primitives + Brotli Codec
+**Current focus:** Phase 01 — binary-primitives-brotli-codec
 
 ## Current Position
 
-Phase: 1 of 5 (Binary Primitives + Brotli Codec)
-Plan: 0 of TBD in current phase
+Phase: 01 (binary-primitives-brotli-codec) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-03 — Roadmap created (5 phases, 14/14 v1 requirements mapped)
+Last activity: 2026-07-03 — Phase 01 execution started
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: — min
-- Total execution time: 0.0 hours
+- Total plans completed: 1
+- Average duration: 12 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01 P01 | 12min | 3 tasks | 5 files |
 
 **Recent Trend:**
 
-- Last 5 plans: —
+- Last 5 plans: 01-01 (12min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -66,6 +66,10 @@ Recent decisions affecting current work:
 - Roadmap: Inside-out build order — prove the pure format core byte-exact (Phases 1-3) before any Electron shell (Phases 4-5).
 - Roadmap: IO-03 (no-op round-trip + length invariant) anchored in Phase 1 codec layer as the first correctness gate.
 - Roadmap: EDIT-04 (XP-table auto-compute) mapped to Phase 3, where the verified StandardExperienceTable lives; Phase 5 surfaces the level input.
+- [Phase ?]: Plan 01-01: Added ignoreDeprecations 6.0 to tsconfig — TS 6 deprecated moduleResolution=node10 (TS5107); needed to keep D-06 CJS+node resolution green under TS 6.0.3
+- [Phase ?]: Plan 01-01: Added types:[node] to tsconfig — TS 6 no longer auto-includes @types/* by default; required for Buffer/node:test/node:assert/strict to resolve under strict mode
+- [Phase ?]: Plan 01-01: Did NOT approve esbuild postinstall (npm allow-scripts) — tsx works without it (prebuilt binary); least-privilege supply-chain stance
+- [Phase ?]: Plan 01-01: Did NOT mark IO-03 complete — IO-03 (no-op round-trip + length invariant) is the codec requirement owned by Plan 02; Plan 01-01 only scaffolded the toolchain
 
 ### Pending Todos
 
@@ -86,6 +90,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-03T14:47:56.993Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-binary-primitives-brotli-codec/01-CONTEXT.md
+Last session: 2026-07-03T19:23:17.216Z
+Stopped at: Plan 01-01 complete (toolchain + fixture scaffolding); ready for Plan 02
+Resume file: .planning/phases/01-binary-primitives-brotli-codec/01-01-SUMMARY.md
