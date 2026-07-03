@@ -13,7 +13,7 @@ This roadmap builds the save editor inside-out, so the corruption risk is proven
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Binary Primitives + Brotli Codec** - Pure-core LE primitives + game-compatible Brotli round-trip, proven byte-exact
+- [x] **Phase 1: Binary Primitives + Brotli Codec** - Pure-core LE primitives + game-compatible Brotli round-trip, proven byte-exact (completed 2026-07-03)
 - [ ] **Phase 2: Format Parser + FieldTable Model** - Walk the documented layout into a fresh-offset FieldTable + JSON view model
 - [ ] **Phase 3: Patcher + Validation + XP Table** - Same-width patch engine, range/type validation, and XP-table-consistent skill edits
 - [ ] **Phase 4: Electron Shell + Secure IPC + Non-Destructive Write** - Trusted main process owns bytes/fs/Brotli; narrow IPC; writes a new file
@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. BinaryReader/Writer round-trips int32, int64 (BigInt), double, bool, and 7-bit-length UTF-8 strings against known .NET-produced bytes — including a ≥128-byte length prefix and a multi-byte UTF-8 string.
   4. All fixed-width numeric reads/writes are little-endian, and a wrong-width or wrong-endian write is caught by unit tests rather than silently corrupting adjacent bytes.
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed
 Plans:
 
 - [x] 01-01-PLAN.md — Toolchain + fixture scaffolding + devDep install (blocking human-verify checkpoint for SUS packages)
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Binary Primitives + Brotli Codec | 2/3 | In Progress|  |
+| 1. Binary Primitives + Brotli Codec | 3/3 | Complete    | 2026-07-03 |
 | 2. Format Parser + FieldTable Model | 0/TBD | Not started | - |
 | 3. Patcher + Validation + XP Table | 0/TBD | Not started | - |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | 0/TBD | Not started | - |
