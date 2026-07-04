@@ -12,22 +12,14 @@
       content="default-src 'self'; script-src 'self'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MV2 Save Editor — bridge smoke test</title>
+    <!-- Same-origin stylesheet — allowed by default-src 'self'; esbuild emits dist/renderer.css beside this file. -->
+    <link rel="stylesheet" href="renderer.css" />
+    <title>MV2 Save Editor</title>
   </head>
   <body>
-    <h1>MV2 Save Editor — bridge smoke test</h1>
-    <p>
-      Throwaway harness (Phase 5 replaces it with the real UI). It only drives
-      <code>window.saveEditor.*</code> — no Node, no fs, no offsets.
-    </p>
-    <p>
-      <button id="btn-load" type="button">Load</button>
-      <button id="btn-getModel" type="button">Get Model</button>
-      <button id="btn-preview" type="button">Preview</button>
-      <button id="btn-write" type="button">Write</button>
-    </p>
-    <pre id="output">(no result yet)</pre>
-    <!-- Local bundle only (esbuild emits dist/renderer.js beside this file in Plan 04-05). -->
+    <!-- The React root — the renderer (dist/renderer.js) mounts the Phase 5 UI here. -->
+    <div id="root"></div>
+    <!-- Local bundle only (esbuild emits dist/renderer.js beside this file). -->
     <script src="renderer.js"></script>
   </body>
 </html>

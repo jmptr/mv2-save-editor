@@ -13,28 +13,10 @@
 
 import { contextBridge, ipcRenderer } from 'electron';
 
-/**
- * The narrow bridge surface exposed on `window.saveEditor`. Results are opaque here (`unknown`) —
- * the smoke-test renderer only JSON-dumps them, and Phase 5's real UI will import the discriminated
- * result types from the core. Keeping them `unknown` here avoids importing `src/*` into preload.
- */
-export interface SaveEditorApi {
-  /** Open the native file dialog (main owns the path) → load + parse a save. */
-  load(): Promise<unknown>;
-  /** Return main's held offset-free ViewModel (or a no-session result). */
-  getModel(): Promise<unknown>;
-  /** Dry-run the edits against main's FieldTable → offset-free change report. */
-  preview(edits: unknown): Promise<unknown>;
-  /** Apply the edits and non-destructively write a NEW .sav (IO-02). */
-  write(edits: unknown): Promise<unknown>;
-}
-
-declare global {
-  // Augments the DOM `Window` so the renderer (and Phase 5's UI) typechecks `window.saveEditor.*`.
-  interface Window {
-    saveEditor: SaveEditorApi;
-  }
-}
+// The bridge surface + Window augmentation now live in the shared, type-only contract (Plan 05-02,
+// src/ipc/results.ts) so preload, main, and the renderer agree on one discriminated shape. This is
+// `import type` — esbuild erases it, so NO src/* runtime enters the sandboxed preload bundle (T-05-05).
+import type { SaveEditorApi } from '../src/ipc/results';
 
 const api: SaveEditorApi = {
   load: () => ipcRenderer.invoke('save:load'),
