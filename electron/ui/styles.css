@@ -302,3 +302,39 @@ body {
   border: 1px solid var(--c-border);
   border-radius: 8px;
 }
+
+/* ── Preview modal change list + violations (Plan 05-08 integration). ── */
+.preview-list,
+.preview-violations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Preview rows stack normally — override the virtualized .list-row's absolute positioning so the
+   SAFE-02 old→new review is readable (these rows have no virtualizer translateY transform). */
+.preview-list .list-row {
+  position: static;
+  height: auto;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
+}
+
+/* ── Empty state (no save loaded / no filter matches). ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  align-items: flex-start;
+  padding: var(--space-lg);
+}
+
+/* ── Summary bar item — stacked label over value. ── */
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
