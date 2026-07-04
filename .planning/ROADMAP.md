@@ -96,7 +96,7 @@ Plans:
   3. Writing edits produces a new Brotli-recompressed `.sav` at a distinct output path while the source file stays byte-unchanged, and the write path re-parses and asserts the length invariant before recompressing. [IO-02]
   4. main re-resolves edit intents against its own freshly-parsed FieldTable and re-validates before patching; malformed or unexpected IPC arguments are rejected rather than trusted.
 
-**Plans**: 3/5 plans executed
+**Plans**: 4/5 plans executed
 Plans:
 **Wave 1**
 
@@ -106,7 +106,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-04-PLAN.md — Renderer-side shell: narrow contextBridge preload + CSP-locked smoke-test renderer + tsconfig include
+- [x] 04-04-PLAN.md — Renderer-side shell: narrow contextBridge preload + CSP-locked smoke-test renderer + tsconfig include
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -138,5 +138,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Binary Primitives + Brotli Codec | 3/3 | Complete    | 2026-07-03 |
 | 2. Format Parser + FieldTable Model | 5/5 | Complete    | 2026-07-04 |
 | 3. Patcher + Validation + XP Table | 2/2 | Complete    | 2026-07-04 |
-| 4. Electron Shell + Secure IPC + Non-Destructive Write | 3/5 | In Progress|  |
+| 4. Electron Shell + Secure IPC + Non-Destructive Write | 4/5 | In Progress|  |
 | 5. Renderer UI — Browse, Search, Edit, Preview | 0/TBD | Not started | - |
