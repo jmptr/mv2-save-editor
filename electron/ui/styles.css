@@ -1,0 +1,304 @@
+/* styles.css — the single bundled design-system stylesheet for the renderer (UI-SPEC §Design System).
+ *
+ * All STATIC styling lives here as CSS custom-property tokens + classes so the UI-SPEC visual
+ * contract is applied in exactly one place and the strict CSP is satisfied (T-05-04): there is no
+ * CSS-in-JS runtime injection. The ONLY dynamic style in the app is the virtualizer's per-row
+ * `transform: translateY(...)`, set via React inline CSSOM in VirtualList.tsx — `style-src` does not
+ * govern element inline style, so that stays CSP-safe. Accent (#2563EB) is used ONLY on the four
+ * reserved-list roles (primary CTA fill, focus ring, edited-row left-bar, pending-count badge);
+ * every other interactive surface is neutral. Red is reserved strictly for problem states.
+ */
+
+:root {
+  /* Spacing scale — multiples of 4 only (UI-SPEC §Spacing Scale). */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Fixed virtualized-list row height — must stay constant per list for correct virtualization. */
+  --row-h: 32px;
+
+  /* Font stacks (UI-SPEC §Design System). */
+  --font-text: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", Menlo, monospace;
+
+  /* Type roles — exactly 4 sizes, 2 weights (UI-SPEC §Typography). */
+  --type-summary-size: 20px;
+  --type-summary-weight: 600;
+  --type-heading-size: 16px;
+  --type-heading-weight: 600;
+  --type-body-size: 14px;
+  --type-body-weight: 400;
+  --type-label-size: 12px;
+  --type-label-weight: 600;
+
+  /* Color — 60/30/10 discipline (UI-SPEC §Color). */
+  --c-dominant: #FFFFFF;   /* 60% — editing surface, list row bg, inputs, main content */
+  --c-secondary: #F1F5F9;  /* 30% — summary bar, headers, toolbars, preview, zebra alt-row */
+  --c-accent: #2563EB;     /* 10% — reserved list ONLY */
+  --c-destructive: #DC2626;/* problem states ONLY — inline validation errors, error banner */
+  --c-text: #0F172A;       /* primary text */
+  --c-muted: #64748B;      /* muted/secondary text */
+  --c-border: #E2E8F0;     /* borders/dividers */
+  --c-hover: #F8FAFC;      /* neutral hover tint (NOT accent) */
+  --c-focus-ring: rgba(37, 99, 235, 0.4); /* accent at 40% alpha — reserved #2 */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: 1.5;
+  color: var(--c-text);
+  background: var(--c-dominant);
+}
+
+/* ── Top layout: summary bar (full width) over two side-by-side panels over the write bar. ── */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+}
+
+.summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--c-secondary);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+}
+
+.summary-value {
+  font-family: var(--font-mono);
+  font-size: var(--type-summary-size);
+  font-weight: var(--type-summary-weight);
+  line-height: 1.2;
+}
+
+.browse-area {
+  display: flex;
+  flex: 1 1 auto;
+  gap: var(--space-lg);
+  min-height: 0;
+}
+
+.write-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--c-secondary);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+}
+
+/* ── Panels + column headers. ── */
+.panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-lg);
+  background: var(--c-dominant);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+}
+
+.panel-title {
+  margin: 0 0 var(--space-md);
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: 1.2;
+}
+
+.column-header {
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-muted);
+}
+
+/* ── Virtualized list container + rows. ── */
+.list-container {
+  position: relative;
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+}
+
+.list-inner {
+  position: relative;
+  width: 100%;
+}
+
+.list-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--row-h);
+  padding: 0 var(--space-sm);
+  gap: var(--space-sm);
+  background: var(--c-dominant);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.list-row:nth-child(even) {
+  background: var(--c-secondary); /* zebra alt-row */
+}
+
+.list-row:hover {
+  background: var(--c-hover); /* neutral hover, NOT accent */
+}
+
+/* Edited-row 2px accent left-bar — accent reserved list #3. */
+.list-row--edited {
+  box-shadow: inset 2px 0 0 0 var(--c-accent);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* ── Inputs + inline validation error. ── */
+.input {
+  min-height: var(--row-h);
+  padding: 0 var(--space-sm);
+  font-family: var(--font-text);
+  font-size: var(--type-body-size);
+  color: var(--c-text);
+  background: var(--c-dominant);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+}
+
+.input.mono {
+  font-family: var(--font-mono);
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: 2px solid var(--c-focus-ring); /* accent 40% alpha — reserved #2 */
+  outline-offset: 1px;
+  border-color: var(--c-accent);
+}
+
+.input--invalid {
+  border-color: var(--c-destructive);
+}
+
+.inline-error {
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 1.4;
+  color: var(--c-destructive);
+}
+
+/* ── Pending-count badge — accent reserved list #4. ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-xs);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  color: var(--c-dominant);
+  background: var(--c-accent);
+  border-radius: 10px;
+}
+
+/* ── Primary CTA fill — accent reserved list #1. ── */
+.btn-primary {
+  min-height: var(--row-h);
+  padding: 0 var(--space-md);
+  font-family: var(--font-text);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-label-weight);
+  color: var(--c-dominant);
+  background: var(--c-accent);
+  border: 1px solid var(--c-accent);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Secondary/neutral button — neutral surface + border (no accent). */
+.btn {
+  min-height: var(--row-h);
+  padding: 0 var(--space-md);
+  font-family: var(--font-text);
+  font-size: var(--type-body-size);
+  color: var(--c-text);
+  background: var(--c-dominant);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--c-hover);
+}
+
+/* ── Banner (warning / error problem-state). ── */
+.banner {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--type-body-size);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  background: var(--c-secondary);
+}
+
+.banner--error {
+  color: var(--c-destructive);
+  border-color: var(--c-destructive);
+}
+
+/* ── Modal / overlay (Preview). ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 640px;
+  max-height: 80vh;
+  padding: var(--space-lg);
+  overflow: auto;
+  background: var(--c-dominant);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+}
