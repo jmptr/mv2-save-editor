@@ -125,7 +125,7 @@ Plans:
   4. The user reviews a pending-changes preview (field, old → new) and must explicitly confirm before any write occurs. [SAFE-02]
   5. Confirming writes a new `.sav`, shows the output path, and the edited save loads in-game with the new values persisting after an in-game re-save (mandatory manual in-game acceptance).
 
-**Plans**: 4/8 plans executed
+**Plans**: 5/8 plans executed
 Plans:
 **Wave 1**
 
@@ -136,7 +136,7 @@ Plans:
 
 **Wave 2** *(depends on Wave 1)*
 
-- [ ] 05-05-PLAN.md — Shared primitives: token stylesheet + VirtualList (32px) + EditableCell [BROWSE-02/03, EDIT-02]
+- [x] 05-05-PLAN.md — Shared primitives: token stylesheet + VirtualList (32px) + EditableCell [BROWSE-02/03, EDIT-02]
 
 **Wave 3** *(depends on Wave 2)*
 
@@ -160,4 +160,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Format Parser + FieldTable Model | 5/5 | Complete    | 2026-07-04 |
 | 3. Patcher + Validation + XP Table | 2/2 | Complete    | 2026-07-04 |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | 5/5 | Complete    | 2026-07-04 |
-| 5. Renderer UI — Browse, Search, Edit, Preview | 4/8 | In Progress|  |
+| 5. Renderer UI — Browse, Search, Edit, Preview | 5/8 | In Progress|  |

@@ -16,8 +16,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Browse & Search
 
 - [ ] **BROWSE-01**: User can see a read-only save summary — character name, gamemode, GP, Slayer Coins, and total level
-- [ ] **BROWSE-02**: User can browse a list of all bank items with their current quantities
-- [ ] **BROWSE-03**: User can browse a list of all skills with their current XP and level
+- [x] **BROWSE-02**: User can browse a list of all bank items with their current quantities
+- [x] **BROWSE-03**: User can browse a list of all skills with their current XP and level
 - [x] **BROWSE-04**: User can filter the bank item list as-you-type (by item ID)
 - [x] **BROWSE-05**: User can filter the skill list as-you-type
 
@@ -79,8 +79,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IO-02 | Phase 4 | Complete |
 | IO-03 | Phase 1 | Complete |
 | BROWSE-01 | Phase 5 | Pending |
-| BROWSE-02 | Phase 5 | Pending |
-| BROWSE-03 | Phase 5 | Pending |
+| BROWSE-02 | Phase 5 | Complete |
+| BROWSE-03 | Phase 5 | Complete |
 | BROWSE-04 | Phase 5 | Complete |
 | BROWSE-05 | Phase 5 | Complete |
 | EDIT-01 | Phase 5 | Complete |
