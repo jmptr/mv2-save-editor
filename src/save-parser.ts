@@ -187,14 +187,24 @@ export function parseSave(buffer: Buffer): ParsedSave {
       for (const e of walletEntries) fieldTable.add(e);
 
       // Inventory → bounded marker-search, 689 stacks (02-04). Each stack becomes 3
-      // FieldEntries keyed by `bank.inventory.<itemId>@<qtyOffset>{,.placeholder,.locked}`
-      // — the @<qtyOffset> ensures uniqueness for duplicate item IDs across tabs
-      // (D-01 — duplicate stacks are DISTINCT fields, NOT D-03 ambiguity). itemId is
-      // encoded in the key (no separate string FieldEntry — variable-width, not a v1
-      // edit target); the projection decodes it from the key for the ViewModel.
+      // FieldEntries keyed by `bank.inventory.<itemId>#<occurrenceIndex>{,.placeholder,.locked}`
+      // — the #<occurrenceIndex> (a per-itemId counter assigned in deterministic walk
+      // order) ensures uniqueness for duplicate item IDs across tabs (D-01 — duplicate
+      // stacks are DISTINCT fields, NOT D-03 ambiguity) WITHOUT encoding the byte offset
+      // in the key. The FieldEntry `offset` still carries the real `s.qtyOffset` (the
+      // offset stays internal to the FieldTable, SC-4); only the key STRING is offset-free
+      // — a stronger SC-4 posture: no byte offset leaks into a key the renderer can see
+      // (T-05-03). itemId is encoded in the key (no separate string FieldEntry —
+      // variable-width, not a v1 edit target); the projection decodes it for the ViewModel.
       bankStacks = findStacks(buffer, invComp.dataStart, invComp.dataStart + invComp.size);
+      // Per-itemId occurrence counter, advanced in walk order — the SAME order
+      // projectViewModel re-walks so the projected BankItem.fieldKey is byte-identical
+      // to this FieldTable key (T-05-01 — deterministic re-resolution on preview/write).
+      const bankItemCounts = new Map<string, number>();
       for (const s of bankStacks) {
-        const keyBase = `bank.inventory.${s.itemId}@${s.qtyOffset}`;
+        const n = bankItemCounts.get(s.itemId) ?? 0;
+        bankItemCounts.set(s.itemId, n + 1);
+        const keyBase = `bank.inventory.${s.itemId}#${n}`;
         fieldTable.add({
           key: keyBase,
           offset: s.qtyOffset,
@@ -299,12 +309,23 @@ export function projectViewModel(
 
   // bankItems: from the recovered stacks (itemId/qty/placeholder/locked — D-01 free
   // metadata, offset-free here; the FieldTable holds the offset-bearing counterparts).
-  const bankItems: BankItem[] = context.bankStacks.map((s) => ({
-    itemId: s.itemId,
-    quantity: s.qty,
-    isPlaceholder: s.placeholder,
-    isLocked: s.locked,
-  }));
+  // Re-walk the SAME `context.bankStacks` order the FieldTable used to assign the
+  // per-itemId occurrence index, so each BankItem.fieldKey is byte-identical to its
+  // FieldTable key (`bank.inventory.<itemId>#<n>`). The renderer sends this exact key
+  // for an EDIT-02 quantity edit and main re-resolves it against a fresh FieldTable
+  // (T-05-01). The key is occurrence-index based, never the byte offset (SC-4, T-05-03).
+  const bankItemCounts = new Map<string, number>();
+  const bankItems: BankItem[] = context.bankStacks.map((s) => {
+    const n = bankItemCounts.get(s.itemId) ?? 0;
+    bankItemCounts.set(s.itemId, n + 1);
+    return {
+      itemId: s.itemId,
+      quantity: s.qty,
+      isPlaceholder: s.placeholder,
+      isLocked: s.locked,
+      fieldKey: `bank.inventory.${s.itemId}#${n}`,
+    };
+  });
 
   // skills: from the per-skill tuples (offset-free; the FieldTable holds the
   // offset-bearing skill.<id>.{xp,levelCap,level} FieldEntries for Phase 3).

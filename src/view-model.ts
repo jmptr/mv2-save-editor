@@ -31,8 +31,11 @@ export interface BankItem {
   isPlaceholder: boolean;
   /** Free metadata (D-01): the stack's locked flag, parsed for free from the byte layout. */
   isLocked: boolean;
+  /** Offset-free stable key for the stack's quantity FieldEntry (bank.inventory.<itemId>#<n>); the renderer sends this for an EDIT-02 quantity edit. */
+  fieldKey: string;
   // Intentionally NO `name` field (D-02 — deferred to Phase 5). The shape leaves room
   // for an optional `name?: string` to be added later without rework.
+  // Intentionally NO `offset` member (SC-4 — the byte offset stays in the FieldTable).
 }
 
 /**

@@ -336,6 +336,7 @@ describe('offset-free ViewModel + no-offset scanner (SC-4 by construction + runt
           quantity: 48652,
           isPlaceholder: false, // free metadata (D-01)
           isLocked: false, // free metadata (D-01)
+          fieldKey: 'bank.inventory.MelvorBase:NormalLog#0', // offset-free stack key (EDIT-02)
         },
       ],
       skills: [
