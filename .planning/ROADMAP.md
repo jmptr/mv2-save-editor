@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Binary Primitives + Brotli Codec** - Pure-core LE primitives + game-compatible Brotli round-trip, proven byte-exact (completed 2026-07-03)
 - [x] **Phase 2: Format Parser + FieldTable Model** - Walk the documented layout into a fresh-offset FieldTable + JSON view model (completed 2026-07-04)
 - [x] **Phase 3: Patcher + Validation + XP Table** - Same-width patch engine, range/type validation, and XP-table-consistent skill edits (completed 2026-07-04)
-- [ ] **Phase 4: Electron Shell + Secure IPC + Non-Destructive Write** - Trusted main process owns bytes/fs/Brotli; narrow IPC; writes a new file
+- [x] **Phase 4: Electron Shell + Secure IPC + Non-Destructive Write** - Trusted main process owns bytes/fs/Brotli; narrow IPC; writes a new file (completed 2026-07-04)
 - [ ] **Phase 5: Renderer UI — Browse, Search, Edit, Preview** - User-facing loop: summary, searchable lists, validated edits, preview/confirm
 
 ## Phase Details
@@ -96,7 +96,7 @@ Plans:
   3. Writing edits produces a new Brotli-recompressed `.sav` at a distinct output path while the source file stays byte-unchanged, and the write path re-parses and asserts the length invariant before recompressing. [IO-02]
   4. main re-resolves edit intents against its own freshly-parsed FieldTable and re-validates before patching; malformed or unexpected IPC arguments are rejected rather than trusted.
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans complete
 Plans:
 **Wave 1**
 
@@ -110,7 +110,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-05-PLAN.md — Main-process wiring (hardened window + 4 handlers + error mapping) + esbuild build + manual UAT [IO-02]
+- [x] 04-05-PLAN.md — Main-process wiring (hardened window + 4 handlers + error mapping) + esbuild build + manual UAT [IO-02]
 
 ### Phase 5: Renderer UI — Browse, Search, Edit, Preview
 
@@ -138,5 +138,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Binary Primitives + Brotli Codec | 3/3 | Complete    | 2026-07-03 |
 | 2. Format Parser + FieldTable Model | 5/5 | Complete    | 2026-07-04 |
 | 3. Patcher + Validation + XP Table | 2/2 | Complete    | 2026-07-04 |
-| 4. Electron Shell + Secure IPC + Non-Destructive Write | 4/5 | In Progress|  |
+| 4. Electron Shell + Secure IPC + Non-Destructive Write | 5/5 | Complete   | 2026-07-04 |
 | 5. Renderer UI — Browse, Search, Edit, Preview | 0/TBD | Not started | - |
