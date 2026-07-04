@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 5
-current_phase_name: Renderer UI — Browse, Search, Edit, Preview
+current_phase: 05
+current_phase_name: renderer-ui-browse-search-edit-preview
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-07-04T22:09:03.974Z"
+last_updated: "2026-07-04T22:24:14.688Z"
 last_activity: 2026-07-04
-last_activity_desc: Phase 04 complete, transitioned to Phase 5
+last_activity_desc: Phase 05 execution started
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 15
-  completed_plans: 15
-  percent: 80
+  total_plans: 23
+  completed_plans: 16
+  percent: 70
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-04)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** Phase 04 — electron-shell-secure-ipc-non-destructive-write
+**Current focus:** Phase 05 — renderer-ui-browse-search-edit-preview
 
 ## Current Position
 
-Phase: 5 — Renderer UI — Browse, Search, Edit, Preview
-Plan: Not started
+Phase: 05 (renderer-ui-browse-search-edit-preview) — EXECUTING
+Plan: 2 of 8
 Status: Ready to execute
-Last activity: 2026-07-04 — Phase 04 complete, transitioned to Phase 5
+Last activity: 2026-07-04 — Phase 05 execution started
 
 Progress: milestone [██████░░░░] 60% (3 of 5 phases complete)
 
@@ -71,6 +71,7 @@ Progress: milestone [██████░░░░] 60% (3 of 5 phases complete
 | Phase 04 P03 | 12 | 2 tasks | 4 files |
 | Phase 04 P04 | 6min | 3 tasks | 4 files |
 | Phase 04 P05 | 21min | 3 tasks | 3 files |
+| Phase 05 P01 | 12min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Plan 04-05: main.ts wires four save:* IPC handlers as thin composition over pure src/ipc/* (SessionStore/ipc-guards/write-service); toErrorResult maps every typed core error to a discriminated { ok:false, kind } — no exception/offset/bigint crosses the bridge (D-04)
 - [Phase ?]: Plan 04-05: built via esbuild (04-01 OPTION A), 3 entries to dist/ (main+preload node/CJS core-bundled electron-external; renderer browser); main to dist/main.js; test/typecheck byte-unchanged
 - [Phase ?]: Plan 04-05: IO-02 closed end-to-end — human UAT approved confirmed hardened window bridge (no Node access) + non-destructive new .sav with original byte-unchanged; WSL2 needs libnss3/libnspr4/libasound2t64 + GTK stack to launch
+- [Phase ?]: 05-01: Re-keyed bank stacks by per-itemId occurrence index (bank.inventory.<itemId>#<n>) instead of byte offset; FieldEntry.offset still holds the real qtyOffset so the patcher is unchanged (stronger SC-4)
+- [Phase ?]: 05-01: BankItem.fieldKey computed identically in parseSave and projectViewModel over the same walk order, guaranteeing byte-identical keys so main re-resolves them on preview/write
 
 ### Pending Todos
 
@@ -136,6 +139,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-04T21:13:28.660Z
+Last session: 2026-07-04T22:23:54.289Z
 Stopped at: Phase 5 context gathered
 Resume file: .planning/phases/05-renderer-ui-browse-search-edit-preview/05-CONTEXT.md

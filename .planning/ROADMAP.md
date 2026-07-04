@@ -125,11 +125,11 @@ Plans:
   4. The user reviews a pending-changes preview (field, old → new) and must explicitly confirm before any write occurs. [SAFE-02]
   5. Confirming writes a new `.sav`, shows the output path, and the edited save loads in-game with the new values persisting after an in-game re-save (mandatory manual in-game acceptance).
 
-**Plans**: 8 plans
+**Plans**: 1/8 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Offset-free bank item addressing (fieldKey) so the renderer can edit duplicate-itemId quantities [EDIT-02]
+- [x] 05-01-PLAN.md — Offset-free bank item addressing (fieldKey) so the renderer can edit duplicate-itemId quantities [EDIT-02]
 - [ ] 05-02-PLAN.md — esbuild React deltas (jsx/iife/NODE_ENV) + type-only IPC results contract + preload/index.html/ui tsconfig [BROWSE-01, SAFE-02]
 - [ ] 05-03-PLAN.md — Pure client lib + Wave 0 tests: validation mirror, filter predicate, level→XP/int64 format [EDIT-01/02/03, BROWSE-04/05]
 - [ ] 05-04-PLAN.md — Pure state + Wave 0 tests: reducer accumulator (D-02) + selectors + Pitfall 5 mutual exclusion [SAFE-02, EDIT-03]
@@ -146,6 +146,7 @@ Plans:
 **Wave 4** *(depends on Wave 3)*
 
 - [ ] 05-08-PLAN.md — App orchestrator + renderer.tsx mount + full build + manual in-game acceptance (criterion 5)
+
 **UI hint**: yes
 
 ## Progress
@@ -159,4 +160,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Format Parser + FieldTable Model | 5/5 | Complete    | 2026-07-04 |
 | 3. Patcher + Validation + XP Table | 2/2 | Complete    | 2026-07-04 |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | 5/5 | Complete    | 2026-07-04 |
-| 5. Renderer UI — Browse, Search, Edit, Preview | 0/8 | Not started | - |
+| 5. Renderer UI — Browse, Search, Edit, Preview | 1/8 | In Progress|  |
