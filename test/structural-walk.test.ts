@@ -33,6 +33,15 @@ import {
 } from '../src/structural-walk';
 import { ParseError } from '../src/field-table';
 import { loadFixtureBuffer } from './helpers/fixture';
+import {
+  oversizedCountBuffer,
+  sizeOverrunsRegionBuffer,
+  negativeSizeBuffer,
+  negativeCountBuffer,
+  oversizedSevenBitPrefixBuffer,
+  truncatedRegionBuffer,
+  versionBumpedFixtureBuffer,
+} from './helpers/malformed';
 
 // The decompressed committed fixture (2,284,747 bytes, version 20). Cached at module
 // load. Consumed read-only via BinaryReader (never mutated).
@@ -220,5 +229,164 @@ describe('walkComponents — delta-0 on all 33 entities (Determinism / T-02-05)'
       (err: unknown) => err instanceof ParseError,
       'delta-0 mismatch throws typed ParseError',
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SC-5 bounds guards — malformed buffers throw bounded typed errors
+// (T-02-01 giant count, T-02-02 malformed 7-bit prefix, T-02-03 region overrun)
+// ---------------------------------------------------------------------------
+
+describe('SC-5 bounds guards — malformed buffers throw bounded typed errors', () => {
+  test('oversized ENTITY count throws ParseError before looping (T-02-01)', () => {
+    const buf = oversizedCountBuffer(); // count = 2^31 − 1
+    const reader = new BinaryReader(buf);
+    // Must throw a typed ParseError BEFORE entering the loop (no giant allocation/hang).
+    assert.throws(
+      () => walkEntities(reader, 0, buf.length),
+      (err: unknown) => err instanceof ParseError,
+      'oversized entity count throws typed ParseError (pre-check, not an unbounded loop)',
+    );
+  });
+
+  test('oversized COMPONENT count throws ParseError before looping (T-02-01)', () => {
+    const buf = oversizedCountBuffer(); // count = 2^31 − 1
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkComponents(reader, 0, buf.length),
+      (err: unknown) => err instanceof ParseError,
+      'oversized component count throws typed ParseError (pre-check)',
+    );
+  });
+
+  test('negative ENTITY count throws ParseError (T-02-01)', () => {
+    const buf = negativeCountBuffer(); // count = −1
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkEntities(reader, 0, buf.length),
+      (err: unknown) => err instanceof ParseError,
+      'negative entity count throws typed ParseError',
+    );
+  });
+
+  test('negative COMPONENT count throws ParseError (T-02-01)', () => {
+    const buf = negativeCountBuffer(); // count = −1
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkComponents(reader, 0, buf.length),
+      (err: unknown) => err instanceof ParseError,
+      'negative component count throws typed ParseError',
+    );
+  });
+
+  test('entity size overruns region throws ParseError (T-02-03)', () => {
+    const buf = sizeOverrunsRegionBuffer(); // 1 entity, size=1000, region=10
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkEntities(reader, 0, buf.length),
+      (err: unknown) => err instanceof ParseError,
+      'entity size overrunning regionEnd throws typed ParseError',
+    );
+  });
+
+  test('component size overruns entity region throws ParseError (T-02-03)', () => {
+    const buf = sizeOverrunsRegionBuffer();
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkComponents(reader, 0, buf.length),
+      (err: unknown) => err instanceof ParseError,
+      'component size overrunning entityEnd throws typed ParseError',
+    );
+  });
+
+  test('negative entity size throws ParseError', () => {
+    const buf = negativeSizeBuffer(); // 1 entity, size=−1
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkEntities(reader, 0, buf.length),
+      (err: unknown) => err instanceof ParseError,
+      'negative entity size throws typed ParseError',
+    );
+  });
+
+  test('negative component size throws ParseError', () => {
+    const buf = negativeSizeBuffer();
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkComponents(reader, 0, buf.length),
+      (err: unknown) => err instanceof ParseError,
+      'negative component size throws typed ParseError',
+    );
+  });
+
+  test('malformed 7-bit length prefix propagates BinaryReader RangeError (T-02-02)', () => {
+    const buf = oversizedSevenBitPrefixBuffer(); // 6-byte 0x80…0x01 prefix
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkEntities(reader, 0, buf.length),
+      (err: unknown) => err instanceof RangeError && !(err instanceof ParseError),
+      'malformed 7-bit prefix propagates the BinaryReader RangeError (not swallowed)',
+    );
+  });
+
+  test('truncated region (declared string past buffer) propagates BinaryReader RangeError', () => {
+    const buf = truncatedRegionBuffer(); // declares 5-byte string, only 4 follow
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkEntities(reader, 0, buf.length),
+      (err: unknown) => err instanceof RangeError && !(err instanceof ParseError),
+      'truncated region propagates the BinaryReader RangeError (no OOB read)',
+    );
+  });
+
+  test('walkEntities throws ParseError when the list region is not consumed exactly', () => {
+    // [int32 count=1][0x01 'X'][int32 size=1][1 byte data][1 extra byte] = 12 bytes
+    const buf = Buffer.alloc(12, 0);
+    buf.writeInt32LE(1, 0);
+    buf[4] = 0x01; buf[5] = 0x58;
+    buf.writeInt32LE(1, 6);
+    buf[10] = 0xaa;
+    const reader = new BinaryReader(buf);
+    assert.throws(
+      () => walkEntities(reader, 0, 12),
+      (err: unknown) => err instanceof ParseError,
+      'entity-list delta-0 mismatch throws typed ParseError',
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Version tolerance — unknown/newer version warns-but-parses (SC-5)
+// ---------------------------------------------------------------------------
+
+describe('version tolerance — unknown/newer version warns-but-parses (SC-5)', () => {
+  test('a version-21 copy of the fixture parses with unknownVersion=true', () => {
+    const buf = versionBumpedFixtureBuffer(); // fixture copy, version bumped 20→21
+    const reader = new BinaryReader(buf);
+
+    const { version, unknownVersion } = readVersion(reader);
+    assert.equal(version, 21);
+    assert.equal(unknownVersion, true);
+
+    // The rest still parses — the structural walk is version-agnostic.
+    const { summary, headerEnd } = parseSaveHeader(reader);
+    assert.equal(summary.name, 'Bob');
+    assert.equal(summary.gamemode, 'Test');
+    assert.equal(summary.totalLevel, 1366);
+    assert.equal(summary.gp, 953063625n);
+    assert.equal(summary.slayerCoins, 6511n);
+    assert.equal(headerEnd, 150);
+
+    const spans = walkEntities(reader, 150, buf.length - TAIL_BYTES);
+    assert.equal(spans.length, 33);
+    assert.equal(reader.offset, buf.length - TAIL_BYTES);
+  });
+
+  test('the shared cached fixture buffer is NOT mutated by the version-bump helper', () => {
+    const before = loadFixtureBuffer();
+    const _bumped = versionBumpedFixtureBuffer();
+    const after = loadFixtureBuffer();
+    assert.equal(after.readInt32LE(0), 20, 'shared cached fixture still reads version 20');
+    assert.ok(before !== _bumped, 'version-bump helper returns a copy, not the shared buffer');
   });
 });
