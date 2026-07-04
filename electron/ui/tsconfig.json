@@ -1,0 +1,15 @@
+{
+  // Scoped .tsx typecheck for the React renderer (Plan 05-02, RESEARCH Open Q #1). Extends the
+  // root config but adds the browser/JSX surface the Node-only root deliberately omits: DOM libs,
+  // the React automatic-runtime jsx transform, and the react/react-dom type packages. `noEmit` —
+  // esbuild (scripts/build.mjs) owns emit; this project only typechecks. `include` uses globs so a
+  // not-yet-created .tsx file is not an error while downstream renderer plans land.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node", "react", "react-dom"],
+    "noEmit": true
+  },
+  "include": ["../renderer.tsx", "./**/*.ts", "./**/*.tsx", "./globals.d.ts"]
+}

@@ -17,6 +17,9 @@
 import { build } from 'esbuild';
 import { copyFile, mkdir } from 'node:fs/promises';
 
+/** Dev vs prod: minify off in dev, on in prod; also drives the react-dom NODE_ENV define below. */
+const isDev = process.env.NODE_ENV === 'development';
+
 /** Shared options for every entry: bundled CJS targeting the Electron-bundled Node 22 runtime. */
 const common = {
   bundle: true,
@@ -37,10 +40,21 @@ await build({
 });
 
 // renderer runs in Chromium — build for the browser platform (no node builtins; window.saveEditor only).
+// It compiles the React 19 JSX renderer (Plan 05-02) under the strict CSP — no Vite, no HMR:
+//   • entry MUST stay named `renderer` → dist/renderer.js (renaming to main/app clobbers dist/main.js — Pitfall 1)
+//   • format:'iife' overrides the inherited 'cjs' — a bare <script> has no CommonJS host (Pitfall 2)
+//   • jsx:'automatic' — React 19 automatic runtime (no `import React` needed)
+//   • define process.env.NODE_ENV — MANDATORY: react-dom reads it; absent → "process is not defined" white window
 await build({
   ...common,
   platform: 'browser',
-  entryPoints: ['electron/renderer.ts'],
+  entryPoints: ['electron/renderer.tsx'],
+  format: 'iife',
+  jsx: 'automatic',
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(isDev ? 'development' : 'production'),
+  },
+  minify: !isDev,
 });
 
 // Copy the CSP-locked page beside the compiled files so loadFile(join(__dirname,'index.html')) works.
