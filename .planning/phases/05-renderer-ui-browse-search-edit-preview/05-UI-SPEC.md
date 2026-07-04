@@ -1,10 +1,11 @@
 ---
 phase: 5
 slug: renderer-ui-browse-search-edit-preview
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-04
+reviewed_at: 2026-07-04
 ---
 
 # Phase 5 — UI Design Contract
@@ -102,6 +103,8 @@ Light neutral base, single blue accent, single red for problems. 60 / 30 / 10 di
 4. The pending-changes count badge on the Preview control.
 
 All other interactive elements (filter inputs, secondary buttons, list rows) use neutral surfaces + borders; hover is a neutral tint (`#F8FAFC`), not accent.
+
+**Focal point:** The summary bar's GP / Total Level values are the primary visual anchor on load; after an edit, focus shifts to the accent-marked edited rows and the pending-changes badge / `Preview Changes` CTA.
 
 **Destructive note:** This phase has **no destructive action** — the write is non-destructive by design (new file; original never touched). Red is therefore reserved strictly for *problem states*: inline value validation errors and the write/parse error banner. Do not use red for the write button. Write-success (output path shown) uses neutral text + a Unicode check glyph — no new green token, to preserve the 10% accent discipline.
 
