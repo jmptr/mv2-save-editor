@@ -13,10 +13,12 @@
   "license": "ISC",
   "author": "",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "dist/main.js",
   "scripts": {
     "test": "tsx --test 'test/**/*.test.ts'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:electron": "node scripts/build.mjs",
+    "start": "npm run build:electron && electron ."
   },
   "devDependencies": {
     "@types/node": "^24.13.2",
