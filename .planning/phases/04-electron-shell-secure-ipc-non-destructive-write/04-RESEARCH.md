@@ -480,22 +480,27 @@ function toErrorResult(e: unknown) {
 | A5 | Electron 43 bundles Node 22.x and the core's zlib/Buffer APIs are present there | Standard Stack | Low — those APIs are long-stable across Node 18–24. |
 | A6 | Splitting pure `src/ipc/*` from thin `electron/*` enables tsx unit tests without a headless-Electron harness | Structure / Validation | Low — standard testability split; the electron wiring is smoke-tested in UAT. |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+All three recommendations below were incorporated into the phase plans during planning; each is marked `RESOLVED:` with the plan that carries it.
 
 1. **esbuild postinstall approval vs least-privilege stance (STATE.md).**
    - What we know: the project previously declined the esbuild postinstall; esbuild needs its platform binary to run.
    - What's unclear: whether to allow the script now that a real build step exists.
    - Recommendation: `checkpoint:human-verify` before install; if declined, drive esbuild via an already-present binary / scripts-deferred install, or reconsider `tsc --outDir` (no postinstall) as the build.
+   - RESOLVED: incorporated into **04-01** as a `checkpoint:human-verify` before the esbuild install (Option A allow-postinstall / Option B `tsc --outDir` fallback recorded in 04-01-SUMMARY and honored by 04-05 Task 2).
 
 2. **Exact `load` signature — path-less (main dialog) vs `load(path)`.**
    - What we know: D-02 says `load(path)`; the renderer has no fs and shouldn't handle paths.
    - What's unclear: whether planning wants the literal `load(path)` (path resolved by a main menu) or the path-less `load()` recommended here.
    - Recommendation: path-less `load()` (main owns showOpenDialog); revisit only if a menu-driven open is wanted.
+   - RESOLVED: incorporated into **04-04** — the preload exposes path-less `load: () => ipcRenderer.invoke('save:load')` and main owns `showOpenDialog` (04-05 `save:load` handler).
 
 3. **Does `getModel` also expose `entityIds`/`bankItems`/`skills`, or just `summary` this phase?**
    - What we know: the ViewModel is fully offset-free and IPC-safe already.
    - What's unclear: how much the throwaway renderer needs to display to "prove the bridge."
    - Recommendation: return the whole `viewModel` from `getModel` (it's already safe); the smoke-test renders `summary` + counts. The real browse UI is Phase 5.
+   - RESOLVED: incorporated into **04-03** (`SessionStore.getModel()` returns the whole held `viewModel`) and surfaced via **04-05** (`save:getModel` handler returns that viewModel).
 
 ## Environment Availability
 
