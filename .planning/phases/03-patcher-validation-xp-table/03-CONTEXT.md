@@ -46,9 +46,17 @@ friendly item/skill names (Phase 5), multi-save batch tooling.
     minimum XP for that level) — no leftover/partial-level XP preserved. Simplest, always
     self-consistent, matches the EDIT-04 story ("type a target Level, app computes correct XP").
   - Direct **XP edits are also allowed**: writing a raw XP value recomputes Level as the highest
-    L where `table[L] <= XP` (clamped to LevelCap), so XP and Level never disagree on disk.
+    L where `table[L] <= XP`, so XP and Level never disagree on disk.
   - **LevelCap is readOnly** — never patched (ROADMAP: "LevelCap unchanged"; FieldTable already
-    flags it). Level is clamped to `1..LevelCap`; XP clamped to `table[LevelCap]` max.
+    flags it).
+  - **Out-of-range is REJECTED, not clamped (fail-loud).** Resolved from research A1: a target
+    Level outside `1..LevelCap`, or an XP whose derived Level would exceed LevelCap / is negative /
+    non-finite, is a validation error (collected per D-01) — the engine does NOT silently clamp.
+    Rationale: silent clamping contradicts the fail-loud, no-silently-wrong-write stance.
+  - **A single skill may not receive both a `level` and an `xp` edit in the same batch.** Resolved
+    from research A2: since each edit expands to write the other field, supplying both is a
+    conflicting intent and is rejected as a validation error (collected per D-01), never
+    last-writer-wins.
 
 ### Self-verifying write (SC-4)
 - **D-03 (provisional → "engine self-verifies by default"):** After writing, the patch engine
@@ -76,8 +84,10 @@ friendly item/skill names (Phase 5), multi-save batch tooling.
   L120=104,273,162). Researcher pins the formula against `docs/current-skill.md` §XP Table.
 - **Where the patcher reads field metadata** — reuse the Phase 2 `FieldTable` `{offset, kind,
   width, value, readOnly, authoritative, mirrors}` directly; how edits map to entries by key.
-- **BinaryWriter reuse** — `src/binary-writer.ts` already exists; planner decides how the patch
-  engine drives it for same-width LE writes (int32/int64/double).
+- **Write mechanism** — research finding: `src/binary-writer.ts` is append-only/growable (cursor
+  from 0), NOT an at-offset patcher. Same-width in-place patching should use `Buffer.from(input)`
+  + `writeInt32LE/writeBigInt64LE/writeDoubleLE(value, offset)`, which makes
+  `output.length === input.length` (SC-1) hold by construction. Do not force BinaryWriter here.
 - **Diff mechanism for SC-4** — whole-buffer byte diff vs. asserting only declared offset ranges;
   either satisfies "only intended ranges changed."
 
