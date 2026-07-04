@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: format-parser-fieldtable-model
 status: executing
-stopped_at: Completed 02-03-PLAN.md (Wallet + Experience parsers)
-last_updated: "2026-07-04T01:51:41.280Z"
+stopped_at: Completed 02-04-PLAN.md (Bank Inventory parser)
+last_updated: "2026-07-04T03:34:00.000Z"
 last_activity: 2026-07-04
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 20
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-03)
 ## Current Position
 
 Phase: 02 (format-parser-fieldtable-model) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-07-04 — Phase 02 execution started
 
@@ -61,6 +61,7 @@ Progress: milestone [██░░░░░░░░] 20% (1 of 5 phases complete
 | Phase 02 P01 | 11min | 2 tasks | 5 files |
 | Phase 02 P02 | 11min | 2 tasks | 3 files |
 | Phase 02 P03 | 12min | 2 tasks | 4 files |
+| Phase 02 P04 | 15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,11 @@ Recent decisions affecting current work:
 - [Phase 02]: Plan 02-02: Did NOT mark IO-01 complete (mirrors 02-01) — 02-02 delivers the structural skeleton (version→SaveHeader→entity list→component boundaries) but full IO-01 (bank 02-04 + skills 02-03 + orchestrator 02-05) ships across Phase 2; IO-01 marked complete by 02-05
 - [Phase ?]: [Phase 02]: Plan 02-03: Currency-by-ID (not by order) — fixture wallet [GoldPieces, PrayerPoints, SlayerCoins] has PrayerPoints BETWEEN GP and SC; string-keying (MelvorBase:GoldPieces/SlayerCoins) is the decisive correctness fix (RESEARCH Pattern 2)
 - [Phase ?]: [Phase 02]: Plan 02-03: RequiredFieldMissingError for missing GP uses Plan 01 class with fieldKey=wallet.GoldPieces (actionable); SlayerCoins authoritative but NOT required; Experience keys component-relative (experience.xp/levelCap/level), 02-05 re-keys per skill; LevelCap readOnly (Pitfall 5); SC-3 bounds 1<=cap<=200 1<=level<=cap XP finite>=0 size>=16; did NOT mark IO-01 complete (deferred to 02-05)
+- [Phase 02]: Plan 02-04: Bounded marker-search (NOT contiguous walk) — scans 'MelvorBase:' across the whole Inventory region [710,20496), recovers all 689 stacks across every tab (a contiguous walk stops at ~296 at the first tab boundary — RESEARCH §Pitfall 1, T-02-01)
+- [Phase 02]: Plan 02-04: '6-bytes-before-the-length-prefix' recipe — marker hit H → 7-bit prefix at H-1 → stack header [int32 qty][bool placeholder][bool locked] at H-7 (RESEARCH §Pattern 3)
+- [Phase 02]: Plan 02-04: Raw-byte boolean validation (NOT readBool) — placeholder/locked must be genuine booleans (raw byte 0 or 1); readBool would swallow byte>1 as true, masking false matches (SC-3, T-02-05)
+- [Phase 02]: Plan 02-04: Duplicate item IDs across tabs are DISTINCT offset-keyed fields (D-01, NOT D-03 ambiguity — RESEARCH Open Q 3); resolveOne(stacks, matchFn) implements D-03 (resolved/candidates/notFound, never auto-picks — T-02-08) for the DIFFERENT case of a single logical field resolving to >1 offset
+- [Phase 02]: Plan 02-04: Did NOT mark IO-01 complete (mirrors 02-01/02-02/02-03) — 02-04 delivers the bank-item-stack half of IO-01 (SC-1 all 689 stacks + SC-3 context-validation), but full IO-01 (orchestrator parseSave wiring) ships in 02-05
 
 ### Pending Todos
 
@@ -111,6 +117,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-04T01:51:41.275Z
-Stopped at: Completed 02-03-PLAN.md (Wallet + Experience parsers)
-Resume file: None
+Last session: 2026-07-04T03:34:00.000Z
+Stopped at: Completed 02-04-PLAN.md (Bank Inventory parser)
+Resume file: .planning/phases/02-format-parser-fieldtable-model/02-05-PLAN.md

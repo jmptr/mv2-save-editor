@@ -57,13 +57,13 @@ Plans:
   4. Re-parsing the same buffer produces identical offsets, and offsets exist only in the FieldTable — the JSON view model contains no byte offsets.
   5. Malformed or oversized length prefixes and entity counts are bounds-checked (no out-of-bounds read or giant allocation), and an unknown save version warns-but-parses rather than hard-failing.
 
-**Plans**: 3/5 plans executed
+**Plans**: 4/5 plans executed
 Plans:
 
 - [x] 02-01-PLAN.md — FieldTable model + offset-free ViewModel contract + test harness (fixture + no-offset scanner)
 - [x] 02-02-PLAN.md — Structural component-walk spine: version → SaveHeader → entity/component walk + SC-5 bounds + version tolerance + delta-0 integrity
 - [x] 02-03-PLAN.md — Wallet parser (currency-by-ID, authoritative) + Experience parser (XP/Cap/Level, context-validated)
-- [ ] 02-04-PLAN.md — Bank Inventory bounded marker-search (689 stacks) + SC-3 context-validation + D-03 ambiguity surfacing
+- [x] 02-04-PLAN.md — Bank Inventory bounded marker-search (689 stacks) + SC-3 context-validation + D-03 ambiguity surfacing
 - [ ] 02-05-PLAN.md — parseSave orchestrator: wire spine + region parsers → FieldTable + derived offset-free ViewModel + SC-4 determinism
 
 ### Phase 3: Patcher + Validation + XP Table
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Binary Primitives + Brotli Codec | 3/3 | Complete    | 2026-07-03 |
-| 2. Format Parser + FieldTable Model | 3/5 | In Progress|  |
+| 2. Format Parser + FieldTable Model | 4/5 | In Progress|  |
 | 3. Patcher + Validation + XP Table | 0/TBD | Not started | - |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | 0/TBD | Not started | - |
 | 5. Renderer UI — Browse, Search, Edit, Preview | 0/TBD | Not started | - |
