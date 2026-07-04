@@ -6,14 +6,14 @@ current_phase: 05
 current_phase_name: renderer-ui-browse-search-edit-preview
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-07-04T22:55:49.286Z"
+last_updated: "2026-07-04T23:02:50.297Z"
 last_activity: 2026-07-04
 last_activity_desc: Phase 05 execution started
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 23
-  completed_plans: 21
+  completed_plans: 22
   percent: 80
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-04)
 ## Current Position
 
 Phase: 05 (renderer-ui-browse-search-edit-preview) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-07-04 — Phase 05 execution started
 
@@ -77,6 +77,7 @@ Progress: milestone [██████░░░░] 60% (3 of 5 phases complete
 | Phase 05 P04 | 8min | 2 tasks | 3 files |
 | Phase 05 P05 | 6min | 2 tasks | 3 files |
 | Phase 05 P06 | 2min | 2 tasks | 2 files |
+| Phase 05 P07 | 5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 05-04: Dirtiness DERIVED by editsToPayload (valid AND String-normalized change); int64 currency emitted as decimal string as-is; unresolvable fieldKey treated as changed (fail-open)
 - [Phase ?]: [Phase 05]: 05-06: Seed each EditableCell from edits[fieldKey]?.raw ?? loaded value so a pending int64/int32 edit re-displays after a virtualized row unmounts/remounts on scroll
 - [Phase ?]: [Phase 05]: 05-06: Reset bank list scroll on query change via VirtualList key={q} remount; onInvalid dispatches CLEAR_EDIT so an invalid value drops any prior valid edit (D-04)
+- [Phase 05]: 05-07: SkillPanel per-skill edit mode held in a panel-level Record<id,mode> (not row-local) so it survives virtualizer row remount; default mode derives from a pending xp edit else 'level'
+- [Phase 05]: 05-07: PreviewModal Write New Save File CTA disabled with zero rows or any violation — SAFE-02 gate refuses a write main's preview flagged
+- [Phase 05]: 05-07: Banner.errorCopy maps all 8 ErrorKinds to two UI-SPEC strings via exhaustive never-guarded switch — a raw kind is never surfaced (T-05-09)
 
 ### Pending Todos
 
@@ -152,6 +156,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-04T22:55:11.716Z
+Last session: 2026-07-04T23:02:25.494Z
 Stopped at: Phase 5 context gathered
 Resume file: .planning/phases/05-renderer-ui-browse-search-edit-preview/05-CONTEXT.md
