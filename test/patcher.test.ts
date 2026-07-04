@@ -11,7 +11,7 @@
 //
 // Analogs: test/wallet-parser.test.ts (committed-fixture consumption + assert.throws instanceof
 // predicates) and test/helpers/fixture.ts (the cached-decompress harness). Field keys are derived
-// from parseSave(FIXTURE) — a real wallet key, a real bank.inventory.<itemId>@<offset> qty key, and a
+// from parseSave(FIXTURE) — a real wallet key, a real bank.inventory.<itemId>#<occurrenceIndex> qty key, and a
 // real skill.<id> whose levelCap is read from the FieldTable (RED before ../src/patcher exists).
 
 import { describe, test } from 'node:test';
@@ -43,10 +43,11 @@ const { fieldTable: FT } = parseSave(FIXTURE);
 
 // A real int64 wallet key (authoritative currency write target, string-keyed public contract).
 const GP_KEY = 'wallet.GoldPieces';
-// A real int32 bank-inventory qty key, verified against the committed fixture (itemId@qtyOffset).
+// A real int32 bank-inventory qty key, verified against the committed fixture
+// (bank.inventory.<itemId>#<occurrenceIndex> — offset-free, #0 = first NormalLog stack).
 // Pinned like wallet-parser.test.ts pins WALLET_DATA_START; the guard below fails loud if the
 // fixture ever drifts so the suite can never silently test a stale key.
-const BANK_QTY_KEY = 'bank.inventory.MelvorBase:NormalLog@736';
+const BANK_QTY_KEY = 'bank.inventory.MelvorBase:NormalLog#0';
 
 // A real skill whose current level is below its cap (room to move the level up or down). Derived
 // from the ViewModel so the suite is not brittle to skill ordering.

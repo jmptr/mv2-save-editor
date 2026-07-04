@@ -125,8 +125,10 @@ describe('parseSave — full fixture integration into one FieldTable (SC-1, SC-2
   test('FieldTable: bank inventory stack present (qty + placeholder + locked) (SC-1)', () => {
     const { fieldTable } = parseSave(FIXTURE);
     // NormalLog @ qtyOffset 736 (verified fixture reference). The stack is keyed by its
-    // distinct qtyOffset so duplicate item IDs across tabs are distinct fields (D-01).
-    const qty = fieldTable.get('bank.inventory.MelvorBase:NormalLog@736');
+    // per-itemId occurrence index (#0 = first NormalLog in walk order) so duplicate item
+    // IDs across tabs are distinct fields (D-01) WITHOUT leaking the byte offset (SC-4).
+    // The FieldEntry `offset` still carries the real qtyOffset (736) internally.
+    const qty = fieldTable.get('bank.inventory.MelvorBase:NormalLog#0');
     assert.ok(qty, 'NormalLog stack at qtyOffset 736 present in the FieldTable');
     assert.equal(qty!.kind, 'int32');
     assert.equal(qty!.width, 4);
@@ -135,14 +137,14 @@ describe('parseSave — full fixture integration into one FieldTable (SC-1, SC-2
 
     // placeholder/locked flags also emitted (D-01 free metadata — parsed for free, surfaced
     // in the FieldTable so the ViewModel projection can derive BankItem with no extra state).
-    const placeholder = fieldTable.get('bank.inventory.MelvorBase:NormalLog@736.placeholder');
+    const placeholder = fieldTable.get('bank.inventory.MelvorBase:NormalLog#0.placeholder');
     assert.ok(placeholder, 'placeholder flag emitted alongside qty');
     assert.equal(placeholder!.kind, 'bool');
     assert.equal(placeholder!.width, 1);
     assert.equal(placeholder!.offset, 736 + 4, 'placeholder at qtyOffset + 4');
     assert.equal(placeholder!.value, false, 'NormalLog is not a placeholder');
 
-    const locked = fieldTable.get('bank.inventory.MelvorBase:NormalLog@736.locked');
+    const locked = fieldTable.get('bank.inventory.MelvorBase:NormalLog#0.locked');
     assert.ok(locked, 'locked flag emitted alongside qty');
     assert.equal(locked!.kind, 'bool');
     assert.equal(locked!.width, 1);
@@ -188,8 +190,8 @@ describe('parseSave — full fixture integration into one FieldTable (SC-1, SC-2
     // is generic, so the Bank locator must be generic too (T-02-05).
     const { fieldTable } = parseSave(FIXTURE);
     assert.ok(fieldTable.get('wallet.GoldPieces'), 'wallet parsed — Bank located generically');
-    assert.ok(fieldTable.get('bank.inventory.MelvorBase:NormalLog@736'),
-      'inventory parsed — Bank located by component names, not ID');
+    assert.ok(fieldTable.get('bank.inventory.MelvorBase:NormalLog#0'),
+      'inventory parsed — Bank located by component names, not ID (offset-free #<n> key)');
   });
 });
 
@@ -224,6 +226,36 @@ describe('parseSave — ViewModel projection from the full fixture (SC-1, SC-2, 
     assert.equal(normalLog!.quantity, 48652);
     assert.equal(normalLog!.isPlaceholder, false);
     assert.equal(normalLog!.isLocked, false);
+    // The projected key is offset-free and matches the FieldTable key (#0 = first NormalLog).
+    assert.equal(normalLog!.fieldKey, 'bank.inventory.MelvorBase:NormalLog#0');
+  });
+
+  test('duplicate itemIds get distinct #<n> keys and every fieldKey resolves to its qty (EDIT-02, T-05-01/T-05-03)', () => {
+    const { fieldTable, viewModel } = parseSave(FIXTURE);
+
+    // (a) A known duplicate itemId (the fixture has two MelvorBase:NormalLog stacks) gets
+    //     distinct occurrence-indexed keys #0 and #1 — offset-free, yet unique per stack.
+    const normalLogs = viewModel.bankItems.filter((b) => b.itemId === 'MelvorBase:NormalLog');
+    assert.ok(normalLogs.length >= 2, 'fixture has >=2 NormalLog stacks (duplicate itemId)');
+    assert.equal(normalLogs[0]!.fieldKey, 'bank.inventory.MelvorBase:NormalLog#0');
+    assert.equal(normalLogs[1]!.fieldKey, 'bank.inventory.MelvorBase:NormalLog#1');
+    assert.notEqual(normalLogs[0]!.fieldKey, normalLogs[1]!.fieldKey, 'distinct keys per stack');
+    // Neither key encodes a byte offset (SC-4 / T-05-03) — no '@' + no digit-only offset segment.
+    for (const b of normalLogs) {
+      assert.ok(!b.fieldKey.includes('@'), 'no @<offset> in the key (offset-free)');
+    }
+
+    // (b) For EVERY bank item, its fieldKey resolves in the FieldTable to an entry whose
+    //     value equals the stack quantity (round-trip: main re-resolves the exact key on
+    //     preview/write — T-05-01 deterministic resolution). Also proves uniqueness: 689
+    //     distinct keys for 689 stacks (a collision would make a later stack overwrite an
+    //     earlier FieldEntry and the value would mismatch).
+    assert.equal(viewModel.bankItems.length, 689);
+    for (const b of viewModel.bankItems) {
+      const entry = fieldTable.get(b.fieldKey);
+      assert.ok(entry, `fieldKey ${b.fieldKey} resolves in the FieldTable`);
+      assert.equal(entry!.value, b.quantity, `fieldKey ${b.fieldKey} resolves to the stack quantity`);
+    }
   });
 
   test('viewModel.skills includes Woodcutting with xp/level/levelCap (SC-1)', () => {
@@ -262,9 +294,9 @@ describe('parseSave — determinism: re-parse yields identical FieldTable offset
       'header.SlayerCoins',
       'wallet.GoldPieces',
       'wallet.SlayerCoins',
-      'bank.inventory.MelvorBase:NormalLog@736',
-      'bank.inventory.MelvorBase:NormalLog@736.placeholder',
-      'bank.inventory.MelvorBase:NormalLog@736.locked',
+      'bank.inventory.MelvorBase:NormalLog#0',
+      'bank.inventory.MelvorBase:NormalLog#0.placeholder',
+      'bank.inventory.MelvorBase:NormalLog#0.locked',
       'skill.MelvorBase:Woodcutting.xp',
       'skill.MelvorBase:Woodcutting.levelCap',
       'skill.MelvorBase:Woodcutting.level',
