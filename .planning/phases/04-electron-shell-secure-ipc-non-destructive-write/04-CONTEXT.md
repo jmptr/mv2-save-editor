@@ -40,7 +40,7 @@ resolved in Electron's favor and not revisited here.
 ## Implementation Decisions
 
 ### Build / scaffold strategy
-- **D-01 (provisional → "keep Phase 4 lean; defer Vite/React to Phase 5"):** Add Electron plus a
+- **D-01:** (provisional → "keep Phase 4 lean; defer Vite/React to Phase 5") Add Electron plus a
   minimal main/preload build only. Do NOT introduce the electron-vite + Vite + React scaffold this
   phase. Keep the existing CommonJS + `tsx` test setup and the headless core undisturbed; compile
   main/preload with `tsc`/esbuild (whatever the researcher confirms integrates cleanest with the
@@ -54,7 +54,7 @@ resolved in Electron's favor and not revisited here.
     tooling decision is made once, in the phase that consumes it.
 
 ### Main-process session model
-- **D-02 (provisional → "single in-memory active session"):** `load(path)` decompresses + parses
+- **D-02:** (provisional → "single in-memory active session") `load(path)` decompresses + parses
   once and main holds a single active session `{ path, decompressedBuffer, fieldTable, viewModel }`.
   `getModel` returns the offset-free `ViewModel` from that session. `preview` and `write` re-run
   `patchSave` against the **held FieldTable** (already the freshly-parsed one from load — "re-parse
@@ -67,8 +67,8 @@ resolved in Electron's favor and not revisited here.
     its own FieldTable and re-validates before patching.
 
 ### Output path & save dialog
-- **D-03 (provisional → "native Save-As dialog every write; …-edited.sav default; never overwrite
-  source"):** On `write`, main opens Electron's native `dialog.showSaveDialog`, pre-filling the
+- **D-03:** (provisional → "native Save-As dialog every write; …-edited.sav default; never overwrite
+  source") On `write`, main opens Electron's native `dialog.showSaveDialog`, pre-filling the
   suggested filename as a `<basename>-edited.sav` sibling of the source. The native dialog handles
   overwrite confirmation. The source file's own path is rejected as a target (guard against
   overwriting the original — the non-destructive guarantee). If the user cancels the dialog, `write`
@@ -76,7 +76,7 @@ resolved in Electron's favor and not revisited here.
   - Timestamped / auto-generated names and backup-on-write stay deferred to v2 (OUT-01).
 
 ### IPC error & preview contract
-- **D-04 (provisional → "structured discriminated results, never throw across the bridge"):** Every
+- **D-04:** (provisional → "structured discriminated results, never throw across the bridge") Every
   IPC handler catches core errors and returns a discriminated result, e.g.
   `{ ok: true, … }` / `{ ok: false, kind, message, violations?: Violation[] }`. Validation failures
   surface the FULL collect-all `Violation[]` (Phase 3 D-01) so the Phase 5 preview (SAFE-02) can

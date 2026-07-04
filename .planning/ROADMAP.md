@@ -98,11 +98,18 @@ Plans:
 
 **Plans**: 5 plans
 Plans:
+**Wave 1**
 
 - [ ] 04-01-PLAN.md — Dependency install (electron@43 + esbuild) behind a blocking least-privilege supply-chain checkpoint
 - [ ] 04-02-PLAN.md — IPC boundary guards: IpcArgError shape guard + int64 string↔bigint bridge + offset-stripping wire report (SC-4)
 - [ ] 04-03-PLAN.md — Session store (single active session, D-02) + non-destructive write-service (length gate + source-path guard) [IO-02]
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 04-04-PLAN.md — Renderer-side shell: narrow contextBridge preload + CSP-locked smoke-test renderer + tsconfig include
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 04-05-PLAN.md — Main-process wiring (hardened window + 4 handlers + error mapping) + esbuild build + manual UAT [IO-02]
 
 ### Phase 5: Renderer UI — Browse, Search, Edit, Preview
