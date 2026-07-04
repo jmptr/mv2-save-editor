@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: format-parser-fieldtable-model
 status: executing
-stopped_at: Completed 02-04-PLAN.md (Bank Inventory parser)
-last_updated: "2026-07-04T03:34:00.000Z"
+stopped_at: Completed 02-05-PLAN.md (save-parser orchestrator) — Phase 02 complete
+last_updated: "2026-07-04T03:53:00.000Z"
 last_activity: 2026-07-04
-last_activity_desc: Phase 02 execution started
+last_activity_desc: Phase 02 complete (5/5 plans, IO-01 delivered)
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 7
-  percent: 20
+  completed_plans: 8
+  percent: 40
 ---
 
 # Project State
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-07-03)
 
 ## Current Position
 
-Phase: 02 (format-parser-fieldtable-model) — EXECUTING
+Phase: 02 (format-parser-fieldtable-model) — COMPLETE
 Plan: 5 of 5
-Status: Ready to execute
-Last activity: 2026-07-04 — Phase 02 execution started
+Status: Phase complete — ready for verification
+Last activity: 2026-07-04 — Phase 02 complete (5/5 plans, IO-01 delivered)
 
-Progress: milestone [██░░░░░░░░] 20% (1 of 5 phases complete)
+Progress: milestone [████░░░░░░] 40% (2 of 5 phases complete)
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: milestone [██░░░░░░░░] 20% (1 of 5 phases complete
 | Phase 02 P02 | 11min | 2 tasks | 3 files |
 | Phase 02 P03 | 12min | 2 tasks | 4 files |
 | Phase 02 P04 | 15min | 2 tasks | 2 files |
+| Phase 02 P05 | 18min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,11 @@ Recent decisions affecting current work:
 - [Phase 02]: Plan 02-04: Raw-byte boolean validation (NOT readBool) — placeholder/locked must be genuine booleans (raw byte 0 or 1); readBool would swallow byte>1 as true, masking false matches (SC-3, T-02-05)
 - [Phase 02]: Plan 02-04: Duplicate item IDs across tabs are DISTINCT offset-keyed fields (D-01, NOT D-03 ambiguity — RESEARCH Open Q 3); resolveOne(stacks, matchFn) implements D-03 (resolved/candidates/notFound, never auto-picks — T-02-08) for the DIFFERENT case of a single logical field resolving to >1 offset
 - [Phase 02]: Plan 02-04: Did NOT mark IO-01 complete (mirrors 02-01/02-02/02-03) — 02-04 delivers the bank-item-stack half of IO-01 (SC-1 all 689 stacks + SC-3 context-validation), but full IO-01 (orchestrator parseSave wiring) ships in 02-05
+- [Phase 02]: Plan 02-05: Single-entry orchestrator — parseSave(buffer) → { fieldTable, viewModel } is the one function Phase 3/4/5 consume; one parse pass produces both the offset-bearing FieldTable (patcher) and the offset-free ViewModel (UI)
+- [Phase 02]: Plan 02-05: ViewModel DERIVED by projection (SC-4 by construction) — projectViewModel reads authoritative wallet currencies FROM the FieldTable (so summary reflects the wallet, NOT the readOnly header mirrors — SC-2); int64 GP/SC as string in the ViewModel (JSON/IPC-safe); assertNoOffsets passes
+- [Phase 02]: Plan 02-05: Deterministic re-parse (SC-4/T-02-09) — walk re-derives offsets from reader.offset on every call; nothing cached/persisted; two parseSave calls yield identical FieldTables
+- [Phase 02]: Plan 02-05: Bank located by component NAMES ('Wallet'+'Inventory'), not hard-coded entity ID (T-02-05 — fixture has MelvorBase:Layout not in docs' Known Entity IDs); Skill = any entity with an Experience component (RESEARCH A3, Combat included); re-keys experience.{xp,levelCap,level} → skill.<entityId>.{...}
+- [Phase 02]: Plan 02-05: IO-01 COMPLETE — parseSave delivers the full IO-01 (Brotli-decompress + parse documented layout + re-parse offsets fresh every load); REQUIREMENTS.md updated
 
 ### Pending Todos
 
@@ -117,6 +123,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-04T03:34:00.000Z
-Stopped at: Completed 02-04-PLAN.md (Bank Inventory parser)
-Resume file: .planning/phases/02-format-parser-fieldtable-model/02-05-PLAN.md
+Last session: 2026-07-04T03:53:00.000Z
+Stopped at: Completed 02-05-PLAN.md (save-parser orchestrator) — Phase 02 complete
+Resume file: None

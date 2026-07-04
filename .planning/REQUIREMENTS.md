@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Save I/O
 
-- [ ] **IO-01**: User can load a `.sav` file — the app Brotli-decompresses it and parses the documented binary layout (version → SaveHeader → entity list), re-parsing offsets fresh on every load
+- [x] **IO-01**: User can load a `.sav` file — the app Brotli-decompresses it and parses the documented binary layout (version → SaveHeader → entity list), re-parsing offsets fresh on every load
 - [ ] **IO-02**: User can write edits to a NEW `.sav` file (Brotli-recompressed), leaving the original file untouched
 - [x] **IO-03**: A no-op load→save produces a byte-identical decompressed buffer, and every write enforces `output.length === input.length` (same-width edits preserve region-size prefixes)
 
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IO-01 | Phase 2 | Pending |
+| IO-01 | Phase 2 | Complete |
 | IO-02 | Phase 4 | Pending |
 | IO-03 | Phase 1 | Complete |
 | BROWSE-01 | Phase 5 | Pending |
