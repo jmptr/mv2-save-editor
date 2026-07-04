@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 4
-current_phase_name: Electron Shell + Secure IPC + Non-Destructive Write
+current_phase: 04
+current_phase_name: electron-shell-secure-ipc-non-destructive-write
 status: executing
 stopped_at: Phase 4 context gathered
-last_updated: "2026-07-04T16:20:09.562Z"
+last_updated: "2026-07-04T16:58:37.163Z"
 last_activity: 2026-07-04
-last_activity_desc: Phase 03 complete, transitioned to Phase 4
+last_activity_desc: Phase 04 execution started
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 15
+  completed_plans: 11
   percent: 60
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-04)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** Phase 4 — Electron Shell + Secure IPC + Non-Destructive Write
+**Current focus:** Phase 04 — electron-shell-secure-ipc-non-destructive-write
 
 ## Current Position
 
-Phase: 4 — Electron Shell + Secure IPC + Non-Destructive Write
-Plan: Not started
+Phase: 04 (electron-shell-secure-ipc-non-destructive-write) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-07-04 — Phase 03 complete, transitioned to Phase 4
+Last activity: 2026-07-04 — Phase 04 execution started
 
 Progress: milestone [██████░░░░] 60% (3 of 5 phases complete)
 
@@ -65,6 +65,7 @@ Progress: milestone [██████░░░░] 60% (3 of 5 phases complete
 | Phase 02 P03 | 12min | 2 tasks | 4 files |
 | Phase 02 P04 | 15min | 2 tasks | 2 files |
 | Phase 02 P05 | 18min | 2 tasks | 2 files |
+| Phase 04 P01 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Plan 02-05: Deterministic re-parse (SC-4/T-02-09) — walk re-derives offsets from reader.offset on every call; nothing cached/persisted; two parseSave calls yield identical FieldTables
 - [Phase 02]: Plan 02-05: Bank located by component NAMES ('Wallet'+'Inventory'), not hard-coded entity ID (T-02-05 — fixture has MelvorBase:Layout not in docs' Known Entity IDs); Skill = any entity with an Experience component (RESEARCH A3, Combat included); re-keys experience.{xp,levelCap,level} → skill.<entityId>.{...}
 - [Phase 02]: Plan 02-05: IO-01 COMPLETE — parseSave delivers the full IO-01 (Brotli-decompress + parse documented layout + re-parse offsets fresh every load); REQUIREMENTS.md updated
+- [Phase ?]: Plan 04-01: OPTION A (allow esbuild postinstall) chosen by human — build-tool-only reversal of Plan 01-01 least-privilege default; Plan 05 uses esbuild build mechanism not tsc fallback
+- [Phase ?]: Plan 04-01: electron pinned EXACTLY at 43.0.0 (no caret) since Electron minors can break; esbuild ^0.28.1; postinstall approval persisted via package.json allowScripts esbuild@0.28.1:true
 
 ### Pending Todos
 
@@ -125,6 +128,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-04T15:44:10.575Z
+Last session: 2026-07-04T16:58:17.218Z
 Stopped at: Phase 4 context gathered
 Resume file: .planning/phases/04-electron-shell-secure-ipc-non-destructive-write/04-CONTEXT.md

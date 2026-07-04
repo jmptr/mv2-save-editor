@@ -96,11 +96,11 @@ Plans:
   3. Writing edits produces a new Brotli-recompressed `.sav` at a distinct output path while the source file stays byte-unchanged, and the write path re-parses and asserts the length invariant before recompressing. [IO-02]
   4. main re-resolves edit intents against its own freshly-parsed FieldTable and re-validates before patching; malformed or unexpected IPC arguments are rejected rather than trusted.
 
-**Plans**: 5 plans
+**Plans**: 1/5 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Dependency install (electron@43 + esbuild) behind a blocking least-privilege supply-chain checkpoint
+- [x] 04-01-PLAN.md — Dependency install (electron@43 + esbuild) behind a blocking least-privilege supply-chain checkpoint
 - [ ] 04-02-PLAN.md — IPC boundary guards: IpcArgError shape guard + int64 string↔bigint bridge + offset-stripping wire report (SC-4)
 - [ ] 04-03-PLAN.md — Session store (single active session, D-02) + non-destructive write-service (length gate + source-path guard) [IO-02]
 
@@ -138,5 +138,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Binary Primitives + Brotli Codec | 3/3 | Complete    | 2026-07-03 |
 | 2. Format Parser + FieldTable Model | 5/5 | Complete    | 2026-07-04 |
 | 3. Patcher + Validation + XP Table | 2/2 | Complete    | 2026-07-04 |
-| 4. Electron Shell + Secure IPC + Non-Destructive Write | 0/5 | Not started | - |
+| 4. Electron Shell + Secure IPC + Non-Destructive Write | 1/5 | In Progress|  |
 | 5. Renderer UI — Browse, Search, Edit, Preview | 0/TBD | Not started | - |
