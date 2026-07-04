@@ -26,11 +26,11 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **EDIT-01**: User can edit GP and Slayer Coins (int64, in the Bank wallet, in-place) — not the cosmetic SaveHeader snapshot
 - [ ] **EDIT-02**: User can edit a bank item's quantity (int32, in-place)
 - [ ] **EDIT-03**: User can edit a skill's XP (double) and Level (int32) in-place, with both written consistently
-- [ ] **EDIT-04**: User can set a skill by typing a target Level; the app auto-computes the correct XP from the StandardExperienceTable and keeps XP and Level consistent
+- [x] **EDIT-04**: User can set a skill by typing a target Level; the app auto-computes the correct XP from the StandardExperienceTable and keeps XP and Level consistent
 
 ### Safety & Validation
 
-- [ ] **SAFE-01**: The app validates every edited value against its type/range before writing (int32 ≤ 2,147,483,647; int64 ≤ ~9.2e18; Level 1..LevelCap; finite non-negative XP)
+- [x] **SAFE-01**: The app validates every edited value against its type/range before writing (int32 ≤ 2,147,483,647; int64 ≤ ~9.2e18; Level 1..LevelCap; finite non-negative XP)
 - [ ] **SAFE-02**: The app shows a pending-changes preview (field, old → new) and requires explicit confirmation before writing
 
 ## v2 Requirements
@@ -86,8 +86,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EDIT-01 | Phase 5 | Pending |
 | EDIT-02 | Phase 5 | Pending |
 | EDIT-03 | Phase 5 | Pending |
-| EDIT-04 | Phase 3 | Pending |
-| SAFE-01 | Phase 3 | Pending |
+| EDIT-04 | Phase 3 | Complete |
+| SAFE-01 | Phase 3 | Complete |
 | SAFE-02 | Phase 5 | Pending |
 
 **Coverage:**

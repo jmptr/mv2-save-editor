@@ -17,7 +17,11 @@ editor must always produce a `.sav` the game can load without corruption.
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Validate edited values against type/range limits before writing — Phase 3 (patcher rejects
+  out-of-range / readOnly / unknown / conflicting edits, collecting all violations, writing nothing
+  on any failure; confirmed by an in-game load of a patched save)
+- ✓ Edit skill XP and Level consistently with the XP table — Phase 3 (engine level: a verified
+  StandardExperienceTable couples XP↔Level on every skill edit; still to be surfaced in the UI)
 
 ### Active
 
@@ -27,8 +31,7 @@ editor must always produce a `.sav` the game can load without corruption.
 - [ ] Browse a searchable list of skills with their current XP and level
 - [ ] Edit GP and Slayer Coins (int64, in-place)
 - [ ] Edit bank item quantities (int32, in-place)
-- [ ] Edit skill XP and Level (double / int32, in-place, consistent with the XP table)
-- [ ] Validate edited values against type/range limits before writing
+- [ ] Edit skill XP and Level (double / int32, in-place, consistent with the XP table) — engine done (Phase 3); UI wiring pending
 - [ ] Preview/confirm a summary of pending changes before writing
 - [ ] Write a valid `.sav` (Brotli-recompressed) to a new output file, leaving the original untouched
 
@@ -78,9 +81,9 @@ editor must always produce a `.sav` the game can load without corruption.
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Desktop app (not browser/CLI) | Native file open/save feel for a personal tool | — Pending |
-| In-place edits only for v1 | Avoids byte insertion + region-size rewrites (corruption risk) | — Pending |
+| In-place edits only for v1 | Avoids byte insertion + region-size rewrites (corruption risk) | ✓ Proven — Phase 3 patcher does same-width writes (output.length === input.length) with a re-parse self-verify |
 | Browse loaded save (searchable lists) over targeted-only editor | Much easier to find and edit values; worth the extra build | — Pending |
-| Non-destructive write to new file + validate + preview | Corrupted saves are the worst failure; keep mistakes recoverable | — Pending |
+| Non-destructive write to new file + validate + preview | Corrupted saves are the worst failure; keep mistakes recoverable | ✓ Validate proven — Phase 3 rejects-before-write, collects all violations; write-to-new-file + preview are Phase 4/5 |
 | Lean Electron + TypeScript (research to confirm) | Native Brotli in Node + existing Node scaffold | — Pending |
 
 ## Evolution
@@ -101,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-03 after initialization*
+*Last updated: 2026-07-04 after Phase 3 (Patcher + Validation + XP Table) — headless correctness core complete: primitives+codec (P1), parser+FieldTable (P2), patch engine+validation+XP table (P3), all proven against a real save and an in-game load*
