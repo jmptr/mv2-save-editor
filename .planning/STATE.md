@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 2
-current_phase_name: Format Parser + FieldTable Model
-status: ready_to_plan
-stopped_at: Phase 2 planned + verified (5 plans, 3 waves); ready to execute
-last_updated: "2026-07-03T23:17:27.907Z"
-last_activity: 2026-07-03
-last_activity_desc: Phase 01 complete + verified, transitioned to Phase 2
+current_phase: 02
+current_phase_name: format-parser-fieldtable-model
+status: executing
+stopped_at: Completed 02-01-PLAN.md (FieldTable + ViewModel contracts)
+last_updated: "2026-07-04T01:12:03.263Z"
+last_activity: 2026-07-04
+last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 8
-  completed_plans: 3
+  completed_plans: 4
   percent: 20
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-03)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** Phase 2 — Format Parser + FieldTable Model
+**Current focus:** Phase 02 — format-parser-fieldtable-model
 
 ## Current Position
 
-Phase: 2 — Format Parser + FieldTable Model
-Plan: Not started
-Status: Ready to plan (Phase 01 complete + verified)
-Last activity: 2026-07-03 — Phase 01 complete + verified, transitioned to Phase 2
+Phase: 02 (format-parser-fieldtable-model) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-07-04 — Phase 02 execution started
 
 Progress: milestone [██░░░░░░░░] 20% (1 of 5 phases complete)
 
@@ -58,6 +58,7 @@ Progress: milestone [██░░░░░░░░] 20% (1 of 5 phases complete
 
 *Updated after each plan completion*
 | Phase 01 P03 | 13min | - tasks | - files |
+| Phase 02 P01 | 11min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,11 @@ Recent decisions affecting current work:
 - [Phase ?]: Plan 01-02: Named imports for node:zlib + node:assert/strict (not default) to eliminate esbuild __toESM interop helper and satisfy the D-04 --100 branch gate
 - [Phase ?]: Plan 01-02: Targeted /* c8 ignore */ comments suppress the residual esbuild __copyProps defensive arm (NOT codec logic — proven via pure-CJS probe); did NOT lower the --100 threshold
 - [Phase ?]: Plan 01-02: IO-03 COMPLETE — codec round-trips the real .sav byte-identical (decompressed-buffer) + length invariant (2,284,747) + large-window rejection (T-1-05) + bomb cap (T-1-03); 100% lines+branches on src/codec.ts
+- [Phase ?]: Plan 02-01: ViewCandidate (offset-free) in ViewModel vs FieldCandidate (offset-bearing) in FieldTable — only interpretation consistent with 'unresolvedFields has candidates' + 'no offset key at any depth' (SC-4)
+- [Phase ?]: Plan 02-01: int64 precision enforced at type level via discriminated union (Int64FieldEntry.value: bigint) — tsc rejects value: number for kind 'int64' (T-02-06); no runtime guard (type-level sufficient for v1)
+- [Phase ?]: Plan 02-01: Carried esbuild-interop /* c8 ignore */ pattern from 01-02/01-03 to src/field-table.ts — 100% coverage on all metrics without lowering --100 threshold
+- [Phase ?]: Plan 02-01: FIXTURE_BUFFER cached at module load in test/helpers/fixture.ts (decompressed once, returned by reference) — matches primitives.test.ts pattern
+- [Phase ?]: Plan 02-01: Did NOT mark IO-01 complete — IO-01 (parse the layout) is owned by plans 02-02..02-05; Plan 02-01 only establishes type contracts + test harness
 
 ### Pending Todos
 
@@ -97,6 +103,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-03T23:17:27.895Z
-Stopped at: Phase 2 planned + verified (5 plans, 3 waves); ready to execute
-Resume file: .planning/phases/02-format-parser-fieldtable-model/02-01-PLAN.md
+Last session: 2026-07-04T01:11:30.767Z
+Stopped at: Completed 02-01-PLAN.md (FieldTable + ViewModel contracts)
+Resume file: .planning/phases/02-format-parser-fieldtable-model/02-02-PLAN.md
