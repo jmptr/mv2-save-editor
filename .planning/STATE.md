@@ -6,15 +6,15 @@ current_phase: 05
 current_phase_name: renderer-ui-browse-search-edit-preview
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-07-04T22:37:19.095Z"
+last_updated: "2026-07-04T22:43:57.331Z"
 last_activity: 2026-07-04
 last_activity_desc: Phase 05 execution started
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 23
-  completed_plans: 18
-  percent: 78
+  completed_plans: 19
+  percent: 80
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-04)
 ## Current Position
 
 Phase: 05 (renderer-ui-browse-search-edit-preview) — EXECUTING
-Plan: 4 of 8
+Plan: 5 of 8
 Status: Ready to execute
 Last activity: 2026-07-04 — Phase 05 execution started
 
@@ -74,6 +74,7 @@ Progress: milestone [██████░░░░] 60% (3 of 5 phases complete
 | Phase 05 P01 | 12min | 2 tasks | 5 files |
 | Phase 05 P02 | 4 | 2 tasks | 8 files |
 | Phase 05 P03 | 3min | 2 tasks | 6 files |
+| Phase 05 P04 | 8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,8 @@ Recent decisions affecting current work:
 - [Phase ?]: 05-02: Did NOT mark BROWSE-01/SAFE-02 complete — plan scaffolds the React build target + type-only IPC contract only; requirements land in downstream renderer plans (defer completion until delivered)
 - [Phase 05]: 05-03: Client validation mirror hand-rolled (not Zod) — Zod number can't hold int64 without a custom string refine; bounds copied from src/patcher.ts, main stays authority (D-04)
 - [Phase 05]: 05-03: int64 thousands-grouping is pure-string (regex insert/strip) so ungroupInt64(groupInt64(d))===d for any digit string — never Number on the value (D-06); format.ts is the sole renderer module value-importing src/experience-table.ts (D-03)
+- [Phase ?]: 05-04: Single pure appReducer (RESEARCH Pattern 2) with Pitfall 5 sibling-clear in SET_EDIT — skill xp+level never both cross (avoids ConflictingEditError)
+- [Phase ?]: 05-04: Dirtiness DERIVED by editsToPayload (valid AND String-normalized change); int64 currency emitted as decimal string as-is; unresolvable fieldKey treated as changed (fail-open)
 
 ### Pending Todos
 
@@ -145,6 +148,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-04T22:36:47.732Z
+Last session: 2026-07-04T22:43:12.559Z
 Stopped at: Phase 5 context gathered
 Resume file: .planning/phases/05-renderer-ui-browse-search-edit-preview/05-CONTEXT.md

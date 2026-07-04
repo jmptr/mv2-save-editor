@@ -31,7 +31,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Safety & Validation
 
 - [x] **SAFE-01**: The app validates every edited value against its type/range before writing (int32 ≤ 2,147,483,647; int64 ≤ ~9.2e18; Level 1..LevelCap; finite non-negative XP)
-- [ ] **SAFE-02**: The app shows a pending-changes preview (field, old → new) and requires explicit confirmation before writing
+- [x] **SAFE-02**: The app shows a pending-changes preview (field, old → new) and requires explicit confirmation before writing
 
 ## v2 Requirements
 
@@ -88,7 +88,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EDIT-03 | Phase 5 | Complete |
 | EDIT-04 | Phase 3 | Complete |
 | SAFE-01 | Phase 3 | Complete |
-| SAFE-02 | Phase 5 | Pending |
+| SAFE-02 | Phase 5 | Complete |
 
 **Coverage:**
 
