@@ -24,6 +24,9 @@ import {
   type FieldCandidate,
   type FieldEntry,
 } from '../src/field-table';
+import { assertNoOffsets } from './helpers/no-offset-scan';
+import { loadFixtureBuffer } from './helpers/fixture';
+import type { ViewModel } from '../src/view-model';
 
 // ---------------------------------------------------------------------------
 // FieldEntry discriminated union — value typed per kind (SC-2/SC-3 foundation)
@@ -301,5 +304,134 @@ describe('typed error hierarchy (ParseError base, reused by Wave 2)', () => {
     const err = new RequiredFieldMissingError('wallet.GoldPieces');
     assert.equal(err.fieldKey, 'wallet.GoldPieces');
     assert.match(err.message, /wallet\.GoldPieces/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Offset-free ViewModel + no-offset scanner (SC-4) + shared fixture harness
+// ---------------------------------------------------------------------------
+//
+// SC-4 has two layers: (1) the ViewModel TYPE is offset-free by construction (no
+// `offset` key at any depth), and (2) assertNoOffsets() is a runtime guard that
+// recursively scans an actual view-model object for any `offset` key at any depth.
+// The type layer catches a parser that tries to type a field as `offset`; the runtime
+// layer catches a parser that bypasses the type system (e.g. `as any`) and leaks an
+// offset into the object. Both layers are required — defense in depth.
+
+describe('offset-free ViewModel + no-offset scanner (SC-4 by construction + runtime guard)', () => {
+  test('assertNoOffsets passes on a clean ViewModel-shaped object (SC-4 type-level)', () => {
+    const vm: ViewModel = {
+      version: 20,
+      unknownVersion: false,
+      summary: {
+        name: 'Bob',
+        gamemode: 'Test',
+        totalLevel: 1366,
+        gp: '953063625', // int64 as string — JSON/IPC-safe, no precision loss
+        slayerCoins: '6511',
+      },
+      bankItems: [
+        {
+          itemId: 'MelvorBase:NormalLog', // raw namespaced ID (D-02)
+          quantity: 48652,
+          isPlaceholder: false, // free metadata (D-01)
+          isLocked: false, // free metadata (D-01)
+        },
+      ],
+      skills: [
+        {
+          id: 'MelvorBase:Woodcutting',
+          xp: 7439645.2,
+          level: 93,
+          levelCap: 120,
+        },
+      ],
+      entityIds: ['MelvorBase:Bank', 'MelvorBase:Woodcutting'], // D-01 free metadata
+      unresolvedFields: [
+        {
+          field: 'ambiguous.thing',
+          candidates: [
+            { evidence: 'validated at one place' }, // offset-free candidate (no offset key)
+            { evidence: 'validated at another' },
+          ],
+        },
+      ],
+    };
+    // Should NOT throw — the view model is offset-free by construction (SC-4 type-level).
+    assertNoOffsets(vm);
+  });
+
+  test('assertNoOffsets throws on an offset-bearing object (SC-4 runtime guard)', () => {
+    const bad: unknown = {
+      version: 20,
+      summary: {
+        name: 'Bob',
+        gamemode: 'Test',
+        totalLevel: 1366,
+        gp: '953063625',
+        slayerCoins: '6511',
+      },
+      bankItems: [
+        {
+          itemId: 'X',
+          quantity: 1,
+          isPlaceholder: false,
+          isLocked: false,
+          offset: 710, // the leak — a byte offset in the view model (SC-4 violation)
+        },
+      ],
+      skills: [],
+      entityIds: [],
+    };
+    assert.throws(
+      () => assertNoOffsets(bad),
+      /SC-4 violation.*bankItems\[0\]\.offset/,
+    );
+  });
+
+  test('assertNoOffsets catches a nested offset at arbitrary depth', () => {
+    const bad: unknown = {
+      level1: { level2: { level3: { offset: 999 } } },
+    };
+    assert.throws(
+      () => assertNoOffsets(bad),
+      /SC-4 violation.*level1\.level2\.level3\.offset/,
+    );
+  });
+
+  test('assertNoOffsets catches an offset on a root-level key', () => {
+    const bad: unknown = { version: 20, offset: 0 };
+    assert.throws(
+      () => assertNoOffsets(bad),
+      /SC-4 violation.*root\.offset/,
+    );
+  });
+
+  test('assertNoOffsets ignores primitives, null, undefined, and empty containers', () => {
+    // Must not throw on non-object inputs — the scanner's base case.
+    assertNoOffsets(undefined);
+    assertNoOffsets(null);
+    assertNoOffsets(42);
+    assertNoOffsets('a string');
+    assertNoOffsets(true);
+    assertNoOffsets(false);
+    assertNoOffsets([]);
+    assertNoOffsets({});
+  });
+});
+
+describe('loadFixtureBuffer (shared test harness for Wave 2/3 parsers)', () => {
+  test('returns the decompressed committed fixture buffer (2,284,747 bytes, D-10/D-11)', () => {
+    const buf = loadFixtureBuffer();
+    assert.ok(Buffer.isBuffer(buf), 'must return a Buffer');
+    // Pinned decompressed length — proves the fixture is the committed real .NET save
+    // (D-10/D-11 — single source of truth, decompressed at runtime via Phase 1 codec).
+    assert.equal(buf.length, 2284747, 'decompressed fixture must be 2,284,747 bytes');
+  });
+
+  test('loadFixtureBuffer returns a stable reference (cached at module load)', () => {
+    const a = loadFixtureBuffer();
+    const b = loadFixtureBuffer();
+    assert.equal(a, b, 'same Buffer reference — decompressed once at module load');
   });
 });
