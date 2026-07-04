@@ -217,8 +217,8 @@ describe('patchSave — D-01 collect-all then reject atomically', () => {
   test('a batch of three bad value edits throws one ValidationError listing all three', () => {
     const bad: Edit[] = [
       { fieldKey: BANK_QTY_KEY, newValue: -1 }, // negative qty
-      { fieldKey: XP_KEY, newValue: -5 }, // XP < 0
-      { fieldKey: LEVEL_KEY, newValue: CAP + 1 }, // level > cap
+      { fieldKey: GP_KEY, newValue: -5n }, // currency < 0n
+      { fieldKey: LEVEL_KEY, newValue: CAP + 1 }, // level > cap (level only — no conflict)
     ];
     assert.throws(
       () => patchSave(FIXTURE, ft(), bad),
