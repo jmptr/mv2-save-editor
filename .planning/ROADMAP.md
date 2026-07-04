@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Binary Primitives + Brotli Codec** - Pure-core LE primitives + game-compatible Brotli round-trip, proven byte-exact (completed 2026-07-03)
 - [x] **Phase 2: Format Parser + FieldTable Model** - Walk the documented layout into a fresh-offset FieldTable + JSON view model (completed 2026-07-04)
-- [ ] **Phase 3: Patcher + Validation + XP Table** - Same-width patch engine, range/type validation, and XP-table-consistent skill edits
+- [x] **Phase 3: Patcher + Validation + XP Table** - Same-width patch engine, range/type validation, and XP-table-consistent skill edits (completed 2026-07-04)
 - [ ] **Phase 4: Electron Shell + Secure IPC + Non-Destructive Write** - Trusted main process owns bytes/fs/Brotli; narrow IPC; writes a new file
 - [ ] **Phase 5: Renderer UI — Browse, Search, Edit, Preview** - User-facing loop: summary, searchable lists, validated edits, preview/confirm
 
@@ -78,11 +78,11 @@ Plans:
   3. Given a target Level, the engine computes XP from the StandardExperienceTable (scaling=0.25, exponent_scaling=300.0, base=2^(1/7)) matching spec milestones (L50=101,331; L99=13,034,427; L120=104,273,162) and writes XP and Level consistently with LevelCap unchanged. [EDIT-04]
   4. After applying an edit, a re-parse of the patched buffer confirms only the intended byte ranges changed — a decompressed diff shows exactly the edited fields and nothing else.
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 Plans:
 
 - [x] 03-01-PLAN.md — StandardExperienceTable (Level↔XP, verified milestones L50/L99/L120) [EDIT-04]
-- [ ] 03-02-PLAN.md — patchSave engine: resolve→validate(collect-all)→same-width write→self-verify diff/re-parse [SAFE-01, EDIT-04]
+- [x] 03-02-PLAN.md — patchSave engine: resolve→validate(collect-all)→same-width write→self-verify diff/re-parse [SAFE-01, EDIT-04]
 
 ### Phase 4: Electron Shell + Secure IPC + Non-Destructive Write
 
@@ -123,6 +123,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Binary Primitives + Brotli Codec | 3/3 | Complete    | 2026-07-03 |
 | 2. Format Parser + FieldTable Model | 5/5 | Complete    | 2026-07-04 |
-| 3. Patcher + Validation + XP Table | 1/2 | In Progress|  |
+| 3. Patcher + Validation + XP Table | 2/2 | Complete   | 2026-07-04 |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | 0/TBD | Not started | - |
 | 5. Renderer UI — Browse, Search, Edit, Preview | 0/TBD | Not started | - |
