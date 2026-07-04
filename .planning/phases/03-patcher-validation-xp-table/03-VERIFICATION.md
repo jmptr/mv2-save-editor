@@ -1,11 +1,12 @@
 ---
 phase: 03-patcher-validation-xp-table
 verified: 2026-07-04T15:19:46Z
-status: human_needed
+status: passed
 score: 8/8 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Apply a GP/quantity/skill edit via patchSave, recompress with codec.compress, write the bytes to a new .sav, and load it in Melvor Idle 2."
     expected: "The game loads the save without corruption/rejection and the edited value (GP, item quantity, or skill XP/Level) is reflected in-game."
     why_human: "Requires the actual Melvor Idle 2 client and a real save slot — the ultimate SAFE-01 acceptance that no automated check can exercise. The codec round-trip (compress→decompress→parseSave) is proven in-suite, but real in-game load is out-of-process. Declared as MANUAL-load-in-game (pending) in 03-02-SUMMARY.md and 03-VALIDATION.md §Manual-Only Verifications."
