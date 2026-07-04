@@ -23,7 +23,7 @@ import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import { BinaryReader } from '../src/binary-reader';
 import { loadFixtureBuffer } from './helpers/fixture';
-import { findStacks, type InventoryStack } from '../src/inventory-parser';
+import { findStacks, resolveOne, type InventoryStack } from '../src/inventory-parser';
 
 // The decompressed committed fixture (2,284,747 bytes, version 20). Cached at module
 // load. Consumed read-only (findStacks never mutates the buffer).
@@ -102,5 +102,124 @@ describe('findStacks — fixture Inventory [710, 20496) recovers all 689 stacks 
       assert.ok(Number.isInteger(s.qty), `qty is an integer: ${s.qty}`);
       assert.ok(s.qty >= 0 && s.qty <= 2147483647, `qty in [0, 2^31-1]: ${s.qty} (${s.itemId})`);
     }
+  });
+});
+
+// ===========================================================================
+// NEGATIVE TESTS (SC-3 context-validation + SC-5 bounds + D-03 ambiguity)
+// — backstop edges that must REJECT a false match, never silently inject it.
+// Crafted buffers isolate each rejection clause; the 689-stack happy path stays green.
+// ===========================================================================
+
+// A valid-stack template: [int32 qty=100][placeholder=0][locked=0][prefix=20]['MelvorBase:TestItem'].
+// marker 'MelvorBase:' at offset 7; stackStart = 0. 27 bytes total. Mutated per negative case.
+function buildValidStackBuffer(mutate?: (b: Buffer) => void): Buffer {
+  const itemId = 'MelvorBase:TestItem'; // 20 bytes
+  const itemIdBytes = Buffer.from(itemId, 'utf8');
+  const buf = Buffer.concat([
+    Buffer.from([100, 0, 0, 0]), // int32 qty=100 LE
+    Buffer.from([0]), // placeholder=false
+    Buffer.from([0]), // locked=false
+    Buffer.from([itemIdBytes.length]), // 7-bit prefix = 20
+    itemIdBytes, // 'MelvorBase:TestItem' (20 bytes)
+  ]);
+  if (mutate) mutate(buf);
+  return buf;
+}
+
+describe('SC-3 false-match rejection (Task 2 negatives)', () => {
+  test('a prefix byte shorter than the marker length is rejected (false match)', () => {
+    // Prefix declares 5 bytes, but 'MelvorBase:' is 10 bytes — a coincidental byte pattern,
+    // not a real item ID. findStacks must skip it → 0 stacks (T-02-05).
+    const buf = buildValidStackBuffer((b) => {
+      b.writeUInt8(5, 6); // prefix at offset 6 → 5 (less than MARKER_LEN=10)
+    });
+    const stacks = findStacks(buf, 0, buf.length);
+    assert.equal(stacks.length, 0, 'prefix < marker length must be rejected (SC-3)');
+  });
+
+  test('a negative int32 qty is rejected (out of [0, 2^31-1] range)', () => {
+    // qty = -1 (0xffffffff) → readInt32LE returns -1 → SC-3 range check rejects.
+    const buf = buildValidStackBuffer((b) => {
+      b.writeInt32LE(-1, 0); // qty at offset 0 → -1
+    });
+    const stacks = findStacks(buf, 0, buf.length);
+    assert.equal(stacks.length, 0, 'negative qty must be rejected (SC-3 qty range)');
+  });
+
+  test('a placeholder byte > 1 is rejected (not a genuine boolean)', () => {
+    // readBool would return `true` for byte 5 (5 !== 0) — masking a false match. The raw
+    // byte must be 0 or 1; byte 5 indicates a non-stack byte pattern (T-02-05).
+    const buf = buildValidStackBuffer((b) => {
+      b.writeUInt8(5, 4); // placeholder at offset 4 → 5 (not 0 or 1)
+    });
+    const stacks = findStacks(buf, 0, buf.length);
+    assert.equal(stacks.length, 0, 'placeholder byte > 1 must be rejected (SC-3)');
+  });
+
+  test('a locked byte > 1 is rejected (not a genuine boolean)', () => {
+    const buf = buildValidStackBuffer((b) => {
+      b.writeUInt8(5, 5); // locked at offset 5 → 5 (not 0 or 1)
+    });
+    const stacks = findStacks(buf, 0, buf.length);
+    assert.equal(stacks.length, 0, 'locked byte > 1 must be rejected (SC-3)');
+  });
+});
+
+describe('SC-5 region-bounds rejection (Task 2 negatives)', () => {
+  test('a candidate whose stack start precedes invStart is skipped (bounds)', () => {
+    // A valid stack at offset 0, but invStart=5 → stackStart=0 < invStart=5 → skip.
+    // The marker is at offset 7; prefix at 6; stackStart at 0. With invStart=5, the
+    // stack header [0,6) starts before the region → rejected (T-02-03).
+    const buf = buildValidStackBuffer();
+    const stacks = findStacks(buf, 5, buf.length);
+    assert.equal(stacks.length, 0, 'stack start < invStart must be skipped (SC-5)');
+  });
+
+  test('a candidate whose item-ID body overruns invEnd is skipped (bounds)', () => {
+    // Truncate invEnd mid-item-ID: marker at 7, prefix=20 → body [7,27), but invEnd=20
+    // means the body would overrun → skip (T-02-03).
+    const buf = buildValidStackBuffer();
+    const stacks = findStacks(buf, 0, 20);
+    assert.equal(stacks.length, 0, 'body overrun invEnd must be skipped (SC-5)');
+  });
+});
+
+describe('D-03 ambiguity surfacing via resolveOne (Task 2)', () => {
+  test('a single logical field matching TWO validated offsets returns candidates (no auto-pick)', () => {
+    // NormalLog appears in 2 tabs in the fixture → 2 distinct stacks. resolveOne with a
+    // matchFn matching NormalLog returns BOTH as candidates, never collapses to one (T-02-08).
+    const stacks = findStacks(FIXTURE, INV_START, INV_END);
+    const result = resolveOne(stacks, (s) => s.itemId === 'MelvorBase:NormalLog');
+    assert.equal(result.kind, 'candidates', 'two matches → candidates, not auto-picked (D-03)');
+    if (result.kind !== 'candidates') return; // narrow for TS
+    assert.ok(result.candidates.length >= 2, 'both NormalLog stacks surfaced as candidates');
+    // Each candidate carries its offset + human-readable evidence (D-03 contract).
+    for (const c of result.candidates) {
+      assert.equal(typeof c.offset, 'number', 'candidate offset is a number');
+      assert.ok(c.offset >= INV_START && c.offset < INV_END, 'candidate offset in region');
+      assert.equal(typeof c.evidence, 'string', 'candidate evidence is a string');
+      assert.ok(c.evidence.includes('MelvorBase:NormalLog'), 'evidence names the item');
+    }
+  });
+
+  test('a single logical field matching exactly ONE offset is resolved', () => {
+    // Find an item ID that appears exactly once in the fixture → resolveOne returns it.
+    const stacks = findStacks(FIXTURE, INV_START, INV_END);
+    const counts = new Map<string, number>();
+    for (const s of stacks) counts.set(s.itemId, (counts.get(s.itemId) ?? 0) + 1);
+    const unique = [...counts.entries()].find(([, n]) => n === 1);
+    assert.ok(unique, 'fixture has at least one unique item ID');
+    const [uniqueItemId] = unique!;
+    const result = resolveOne(stacks, (s) => s.itemId === uniqueItemId);
+    assert.equal(result.kind, 'resolved', 'one match → resolved (D-03 resolve-one)');
+    if (result.kind !== 'resolved') return;
+    assert.equal(result.stack.itemId, uniqueItemId, 'resolved the correct stack');
+  });
+
+  test('a single logical field matching ZERO offsets returns notFound (D-03 fail-loud-when-zero)', () => {
+    const stacks = findStacks(FIXTURE, INV_START, INV_END);
+    const result = resolveOne(stacks, (s) => s.itemId === 'MelvorBase:NonexistentItem');
+    assert.equal(result.kind, 'notFound', 'zero matches → notFound (D-03)');
   });
 });
