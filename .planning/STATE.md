@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: format-parser-fieldtable-model
 status: executing
-stopped_at: Completed 02-02-PLAN.md (structural walk spine)
-last_updated: "2026-07-04T01:32:56.497Z"
+stopped_at: Completed 02-03-PLAN.md (Wallet + Experience parsers)
+last_updated: "2026-07-04T01:51:41.280Z"
 last_activity: 2026-07-04
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
   percent: 20
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-03)
 ## Current Position
 
 Phase: 02 (format-parser-fieldtable-model) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-07-04 — Phase 02 execution started
 
@@ -60,6 +60,7 @@ Progress: milestone [██░░░░░░░░] 20% (1 of 5 phases complete
 | Phase 01 P03 | 13min | - tasks | - files |
 | Phase 02 P01 | 11min | 2 tasks | 5 files |
 | Phase 02 P02 | 11min | 2 tasks | 3 files |
+| Phase 02 P03 | 12min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Plan 02-02: Count pre-check bounds the int32 count against the enclosing region (count*MIN_ITEM_FRAMING=5 > remaining → ParseError) BEFORE looping — a giant count (2^31-1) throws before any iteration/allocation (T-02-01)
 - [Phase 02]: Plan 02-02: parseSaveHeader emits ONLY header.GP + header.SlayerCoins as FieldEntries (readOnly + mirrors 'wallet.GoldPieces'/'wallet.SlayerCoins', SC-2); TotalLevel/name/gamemode are summary-only (PROJECT.md defers header editing to a later milestone)
 - [Phase 02]: Plan 02-02: Did NOT mark IO-01 complete (mirrors 02-01) — 02-02 delivers the structural skeleton (version→SaveHeader→entity list→component boundaries) but full IO-01 (bank 02-04 + skills 02-03 + orchestrator 02-05) ships across Phase 2; IO-01 marked complete by 02-05
+- [Phase ?]: [Phase 02]: Plan 02-03: Currency-by-ID (not by order) — fixture wallet [GoldPieces, PrayerPoints, SlayerCoins] has PrayerPoints BETWEEN GP and SC; string-keying (MelvorBase:GoldPieces/SlayerCoins) is the decisive correctness fix (RESEARCH Pattern 2)
+- [Phase ?]: [Phase 02]: Plan 02-03: RequiredFieldMissingError for missing GP uses Plan 01 class with fieldKey=wallet.GoldPieces (actionable); SlayerCoins authoritative but NOT required; Experience keys component-relative (experience.xp/levelCap/level), 02-05 re-keys per skill; LevelCap readOnly (Pitfall 5); SC-3 bounds 1<=cap<=200 1<=level<=cap XP finite>=0 size>=16; did NOT mark IO-01 complete (deferred to 02-05)
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-04T01:31:32.273Z
-Stopped at: Completed 02-02-PLAN.md (structural walk spine)
+Last session: 2026-07-04T01:51:41.275Z
+Stopped at: Completed 02-03-PLAN.md (Wallet + Experience parsers)
 Resume file: None
