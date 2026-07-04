@@ -194,7 +194,7 @@ Left to research/planning, all within the UI-SPEC's locked visual contract:
   over a `[ preview / write ]` bar (D-05).
 - Modal confirm listing old→new rows with the UI-SPEC copy `Write {n} pending change(s)?` and the
   `Write New Save File` CTA that opens the native Save-As (D-08).
-- Live level→XP echo in "Set by level" mode, e.g. typing `Level 99` shows `XP 13,034,431` before
+- Live level→XP echo in "Set by level" mode, e.g. typing `Level 99` shows `XP 13,034,427` before
   write (D-03).
 
 </specifics>

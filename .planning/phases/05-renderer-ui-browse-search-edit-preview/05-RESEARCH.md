@@ -205,7 +205,7 @@ await build({
   minify: !isDev,
 });
 ```
-- CSS is emitted automatically: `import './styles.css'` from `renderer.tsx` makes esbuild write `dist/renderer.css`. Add `<link rel="stylesheet" href="renderer.css">` to `index.html` (same-origin → allowed by `default-src 'self'`). `[CITED: esbuild.github.io/content-types/#css]`
+- CSS is emitted automatically: `import './ui/styles.css'` from `renderer.tsx` (which lives at `electron/renderer.tsx`; the stylesheet is `electron/ui/styles.css`) makes esbuild write `dist/renderer.css`. Add `<link rel="stylesheet" href="renderer.css">` to `index.html` (same-origin → allowed by `default-src 'self'`). `[CITED: esbuild.github.io/content-types/#css]`
 - **CSP safety:** neither esbuild output nor React's prod/dev build uses `eval`/`new Function`, so `script-src 'self'` is satisfied with no change. React inline `style={{}}` props set the CSSOM directly (not the `style` HTML attribute) and are **not** governed by `style-src`, so dynamic per-row `transform`/`height` from the virtualizer work under the strict CSP. Static styling still goes through the external stylesheet per the UI-SPEC. `[ASSUMED]` (CSP CSSOM behavior — well established but not re-verified this session)
 
 ### Pattern 2: One top-level `useReducer` + fieldKey-keyed accumulator (D-02)
@@ -419,7 +419,7 @@ export function matches(query: string, id: string): boolean {
 // electron/renderer.tsx
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
-import './styles.css';                               // → dist/renderer.css
+import './ui/styles.css';                            // → dist/renderer.css (renderer.tsx is at electron/, stylesheet at electron/ui/)
 const root = document.getElementById('root');
 if (root) createRoot(root).render(<App />);
 ```
@@ -447,16 +447,15 @@ if (root) createRoot(root).render(<App />);
 
 **Note:** No `[ASSUMED]` claim touches the corruption-critical write path — all byte-level bounds were **verified against `src/patcher.ts`** this session (Pitfall 6). The assumptions above are build-config and CSS-behavior details with cheap, non-destructive fallbacks.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **tsconfig strategy for `.tsx` + DOM lib**
+1. **tsconfig strategy for `.tsx` + DOM lib** — **RESOLVED: scoped `electron/ui/tsconfig.json` (implemented by Plan 05-02).**
    - What we know: root `tsconfig.json` has `lib:["ES2022"]`, `types:["node"]`, `include:["electron/**/*.ts", ...]` (does NOT match `.tsx`), no `jsx` option. `exactOptionalPropertyTypes:true` is on.
-   - What's unclear: single shared tsconfig (add `jsx:"react-jsx"`, `"DOM","DOM.Iterable"` to lib, `electron/**/*.tsx` to include) vs a scoped `electron/ui/tsconfig.json` extending root.
-   - Recommendation: a small scoped UI tsconfig keeps DOM globals out of Node code; if that is churn, add the three keys to the root config (harmless — the renderer already opted into DOM via a `/// <reference lib="dom" />`). Either way, add `electron/**/*.tsx` to `include` and `@types/react`(-dom) to devDeps. `exactOptionalPropertyTypes` may require a few explicit `| undefined` in props — minor.
+   - Resolution: Plan 05-02 adds a scoped `electron/ui/tsconfig.json` extending root with `jsx:"react-jsx"`, `lib:["ES2022","DOM","DOM.Iterable"]`, `types:["node","react","react-dom"]`, and a `typecheck:ui` npm script — keeping DOM globals out of the Node-side `tsc --noEmit` (root config unchanged). A `declare module '*.css'` ambient lives in `electron/ui/globals.d.ts`. Component plans verify via `npm run typecheck:ui`; the full `build:electron` runs in 05-08.
 
-2. **Dev-loop ergonomics (esbuild watch + electron reload)**
+2. **Dev-loop ergonomics (esbuild watch + electron reload)** — **RESOLVED: out of Phase 5 scope (nice-to-have per D-01); no `dev` script planned this phase.**
    - What we know: D-01 accepts "esbuild `--watch` + electron reload (no HMR)."
-   - What's unclear: exact scripts. Recommendation: add a `dev` script that runs `esbuild.context()` + `ctx.watch()` (renderer + main) and launches `electron .`; renderer edits need a window reload (Ctrl/Cmd+R reloads `renderer.js`), main edits need an electron restart. No extra deps.
+   - Resolution: The solo workflow uses `npm start` (build + `electron .`) as in Phase 4; an optional `esbuild.context()`+`ctx.watch()` `dev` script can be added later without new deps. Not required for any Phase 5 requirement, so it is not planned.
 
 ## Environment Availability
 
