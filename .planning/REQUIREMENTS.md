@@ -18,14 +18,14 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **BROWSE-01**: User can see a read-only save summary — character name, gamemode, GP, Slayer Coins, and total level
 - [ ] **BROWSE-02**: User can browse a list of all bank items with their current quantities
 - [ ] **BROWSE-03**: User can browse a list of all skills with their current XP and level
-- [ ] **BROWSE-04**: User can filter the bank item list as-you-type (by item ID)
-- [ ] **BROWSE-05**: User can filter the skill list as-you-type
+- [x] **BROWSE-04**: User can filter the bank item list as-you-type (by item ID)
+- [x] **BROWSE-05**: User can filter the skill list as-you-type
 
 ### Editing
 
-- [ ] **EDIT-01**: User can edit GP and Slayer Coins (int64, in the Bank wallet, in-place) — not the cosmetic SaveHeader snapshot
+- [x] **EDIT-01**: User can edit GP and Slayer Coins (int64, in the Bank wallet, in-place) — not the cosmetic SaveHeader snapshot
 - [x] **EDIT-02**: User can edit a bank item's quantity (int32, in-place)
-- [ ] **EDIT-03**: User can edit a skill's XP (double) and Level (int32) in-place, with both written consistently
+- [x] **EDIT-03**: User can edit a skill's XP (double) and Level (int32) in-place, with both written consistently
 - [x] **EDIT-04**: User can set a skill by typing a target Level; the app auto-computes the correct XP from the StandardExperienceTable and keeps XP and Level consistent
 
 ### Safety & Validation
@@ -81,11 +81,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BROWSE-01 | Phase 5 | Pending |
 | BROWSE-02 | Phase 5 | Pending |
 | BROWSE-03 | Phase 5 | Pending |
-| BROWSE-04 | Phase 5 | Pending |
-| BROWSE-05 | Phase 5 | Pending |
-| EDIT-01 | Phase 5 | Pending |
+| BROWSE-04 | Phase 5 | Complete |
+| BROWSE-05 | Phase 5 | Complete |
+| EDIT-01 | Phase 5 | Complete |
 | EDIT-02 | Phase 5 | Complete |
-| EDIT-03 | Phase 5 | Pending |
+| EDIT-03 | Phase 5 | Complete |
 | EDIT-04 | Phase 3 | Complete |
 | SAFE-01 | Phase 3 | Complete |
 | SAFE-02 | Phase 5 | Pending |
