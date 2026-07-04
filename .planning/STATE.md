@@ -6,15 +6,15 @@ current_phase: 05
 current_phase_name: renderer-ui-browse-search-edit-preview
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-07-04T22:24:14.688Z"
+last_updated: "2026-07-04T22:30:41.893Z"
 last_activity: 2026-07-04
 last_activity_desc: Phase 05 execution started
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 23
-  completed_plans: 16
-  percent: 70
+  completed_plans: 17
+  percent: 74
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-04)
 ## Current Position
 
 Phase: 05 (renderer-ui-browse-search-edit-preview) — EXECUTING
-Plan: 2 of 8
+Plan: 3 of 8
 Status: Ready to execute
 Last activity: 2026-07-04 — Phase 05 execution started
 
@@ -72,6 +72,7 @@ Progress: milestone [██████░░░░] 60% (3 of 5 phases complete
 | Phase 04 P04 | 6min | 3 tasks | 4 files |
 | Phase 04 P05 | 21min | 3 tasks | 3 files |
 | Phase 05 P01 | 12min | 2 tasks | 5 files |
+| Phase 05 P02 | 4 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Plan 04-05: IO-02 closed end-to-end — human UAT approved confirmed hardened window bridge (no Node access) + non-destructive new .sav with original byte-unchanged; WSL2 needs libnss3/libnspr4/libasound2t64 + GTK stack to launch
 - [Phase ?]: 05-01: Re-keyed bank stacks by per-itemId occurrence index (bank.inventory.<itemId>#<n>) instead of byte offset; FieldEntry.offset still holds the real qtyOffset so the patcher is unchanged (stronger SC-4)
 - [Phase ?]: 05-01: BankItem.fieldKey computed identically in parseSave and projectViewModel over the same walk order, guaranteeing byte-identical keys so main re-resolves them on preview/write
+- [Phase ?]: 05-02: Retired throwaway electron/renderer.ts — orphaned by the renderer.tsx build-entry rename + tightened SaveEditorApi (unknown to WireEdit array); index.html #root replaces its smoke DOM
+- [Phase ?]: 05-02: Did NOT mark BROWSE-01/SAFE-02 complete — plan scaffolds the React build target + type-only IPC contract only; requirements land in downstream renderer plans (defer completion until delivered)
 
 ### Pending Todos
 
@@ -139,6 +142,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-04T22:23:54.289Z
+Last session: 2026-07-04T22:29:59.719Z
 Stopped at: Phase 5 context gathered
 Resume file: .planning/phases/05-renderer-ui-browse-search-edit-preview/05-CONTEXT.md
