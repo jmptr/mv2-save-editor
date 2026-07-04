@@ -370,17 +370,16 @@ for (const [level, xp] of MILESTONES) {
 
 **If confirmed:** A1 and A2 are the two decisions worth a one-line check with the user before planning locks; the rest are low-risk.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Clamp vs reject for out-of-range XP/level (A1/A2).**
-   - What we know: D-02 says clamp; the project stance is fail-loud.
-   - What's unclear: whether the user prefers silent clamping or an explicit rejection.
-   - Recommendation: reject with a typed `ValidationError`; if clamp is required, record it in the change report so it is visible in the Phase 5 preview.
+   - **RESOLVED → reject (fail-loud), not clamp.** Locked in `03-CONTEXT.md` D-02 ("Out-of-range
+     is REJECTED, not clamped") and the dual level+xp-for-one-skill conflict (A2) as a
+     `ConflictingEditError`. Both plans (03-01/03-02) implement reject; no clamp path exists.
 
 2. **Does the change report serialize int64 as bigint or string?**
-   - What we know: Phase 2 ViewModel renders int64 as `string` for JSON/IPC safety; the change report is internal to the core here.
-   - What's unclear: whether Phase 4 IPC will consume the change report directly.
-   - Recommendation: keep `bigint` in-core (native type); let Phase 4 stringify at the IPC boundary (mirrors the existing ViewModel decision).
+   - **RESOLVED → keep `bigint` in-core.** 03-02 keeps the change report's int64 values as native
+     `bigint`; Phase 4 stringifies at the IPC boundary (mirrors the Phase 2 ViewModel decision).
 
 ## Environment Availability
 

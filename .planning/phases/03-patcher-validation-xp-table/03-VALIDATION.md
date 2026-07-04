@@ -1,8 +1,8 @@
 ---
 phase: 3
 slug: patcher-validation-xp-table
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-07-04
 ---
@@ -75,6 +75,6 @@ created: 2026-07-04
 - [ ] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 5s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-07-04 (plan-checker VERIFICATION PASSED — all tasks carry automated verify, RED tests embedded as each plan's Task 1, ~2s latency)
