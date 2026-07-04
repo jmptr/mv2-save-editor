@@ -224,6 +224,19 @@ export function walkEntities(
 ): EntitySpan[] {
   reader.seek(listStart);
   const count = reader.readInt32();
+  // SC-5 (T-02-01): bound the count against the enclosing region BEFORE looping.
+  // A giant int32 count must not drive an unbounded loop or allocation. Each item
+  // needs at least 5 bytes of framing (1-byte 7-bit string prefix for an empty id
+  // + 4-byte int32 size), so a count whose minimum span exceeds the remaining
+  // region — or a negative count — is rejected with a typed ParseError before any
+  // iteration runs. `count * 5` cannot overflow a JS double for any int32 count.
+  const MIN_ENTITY_FRAMING = 5;
+  const remaining = listEnd - reader.offset;
+  if (count < 0 || count * MIN_ENTITY_FRAMING > remaining) {
+    throw new ParseError(
+      `entity count ${count} exceeds region capacity (remaining ${remaining} bytes, min ${MIN_ENTITY_FRAMING}/item)`,
+    );
+  }
   const spans: EntitySpan[] = [];
   for (let i = 0; i < count; i++) {
     const id = reader.readString();
@@ -272,6 +285,19 @@ export function walkComponents(
   const end = entityStart + entitySize;
   reader.seek(entityStart);
   const count = reader.readInt32();
+  // SC-5 (T-02-01): bound the count against the enclosing entity region BEFORE
+  // looping. A giant int32 component count must not drive an unbounded loop or
+  // allocation. Each component needs at least 5 bytes of framing (1-byte 7-bit
+  // string prefix for an empty name + 4-byte int32 size), so a count whose
+  // minimum span exceeds the remaining entity region — or a negative count — is
+  // rejected with a typed ParseError before any iteration runs.
+  const MIN_COMPONENT_FRAMING = 5;
+  const remaining = end - reader.offset;
+  if (count < 0 || count * MIN_COMPONENT_FRAMING > remaining) {
+    throw new ParseError(
+      `component count ${count} exceeds entity region capacity (remaining ${remaining} bytes, min ${MIN_COMPONENT_FRAMING}/item)`,
+    );
+  }
   const comps: Component[] = [];
   for (let i = 0; i < count; i++) {
     const name = reader.readString();
