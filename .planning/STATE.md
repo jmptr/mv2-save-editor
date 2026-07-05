@@ -159,6 +159,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-05T14:33:12.664Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-renderer-ui-browse-search-edit-preview/05-CONTEXT.md
+Last session: 2026-07-05 (resumed)
+Stopped at: v1.0 milestone complete + verified; starting /gsd-debug on bank phantom-stack bug (src/inventory-parser.ts marker-search surfaces phantom editable stacks)
+Resume file: docs/bank-inventory-phantom-stacks.md (open-bug diagnosis)

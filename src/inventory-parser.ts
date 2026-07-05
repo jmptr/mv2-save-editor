@@ -1,37 +1,62 @@
 /* c8 ignore start */
-// Bank Inventory parser — the one place structural descent doesn't suffice.
+// Bank Inventory parser — an explicit structural tab-walk (the one place structural
+// descent doesn't suffice from the generic component walk, so it is decoded here).
 //
-// Item stacks are nested into named tabs inside the Bank entity's Inventory component.
-// A naive contiguous walk stops at the first tab boundary (~296 of 689 stacks — RESEARCH
-// §Pitfall 1); the bounded marker-search + "6-bytes-before-the-length-prefix" recipe +
-// SC-3 context-validation recovers ALL 689 across every tab (RESEARCH §Pattern 3).
+// HISTORY: the original parser used a loose 'MelvorBase:' marker-search over the whole
+// Inventory region. That recovered the real stacks BUT also leaked PHANTOM stacks from
+// the component's trailing "Chests" registry (item-id strings whose preceding 6 bytes
+// coincidentally validated as a stack header). Editing a phantom wrote into non-stack
+// data → the game rejected the bank on load and reverted ALL edits
+// (docs/bank-inventory-phantom-stacks.md). This parser replaces the marker-search with a
+// byte-exact walk of the tab list, so phantoms are STRUCTURALLY impossible, not filtered.
 //
-// Layout at each stack (the recipe — RESEARCH §Code Examples):
-//   [int32 qty]    (4 bytes)   at qtyOffset
-//   [bool placeholder] (1 byte) at qtyOffset + 4
-//   [bool locked]      (1 byte) at qtyOffset + 5
-//   [7-bit length prefix] (1 byte) at qtyOffset + 6   (= hit - 1, where hit is the
-//                                                     offset of the item-ID body)
-//   [item-ID UTF-8 body]           at qtyOffset + 7   (= hit)
+// INVENTORY COMPONENT LAYOUT (decoded byte-exact against MahoganyLog-103.sav,
+// test-fixture.sav, and save_35a…sav — all version 20):
 //
-// The marker search finds 'MelvorBase:' (the namespaced item-ID prefix) at `hit`; the
-// 7-bit prefix at `hit - 1` must equal the item-ID byte length; the stack header is then
-// at `(hit - 1) - 6`. Each candidate is context-validated before becoming a stack: the
-// prefix must match the ID length, qty must be in [0, 2^31-1], placeholder/locked bytes
-// must be in {0,1}, and the whole stack must lie within [invStart, invEnd). False matches
-// are rejected, never silently injected (T-02-05); reads never escape the region (T-02-03).
+//   [int32 reserved]          inventory-level field (0 in all observed saves)
+//   [int32 tabCount]          number of bank tabs (drives the walk length)
+//   tab[0]  (the unnamed default tab):
+//     [int32 a][int32 b][int32 c]         tab config (capacity/lock flags; a,c = INT32_MAX)
+//     [uint16 sentinel]                   (1 in all observed saves)
+//     [int32 stackCount]
+//     stack × stackCount
+//   tab[1 .. tabCount-1]  (named tabs):
+//     [string name]                       7-bit-length-prefixed UTF-8 (e.g. "Tab 1")
+//     [int32 a][int32 b][int32 c][int32 d]   tab config (b,d = INT32_MAX)
+//     [uint16 sentinel]
+//     [int32 stackCount]
+//     stack × stackCount
 //
-// Implements: D-01 (offset-keyed stacks — duplicate item IDs across tabs are DISTINCT
-// fields, NOT D-03 ambiguity), D-03 (a single logical field resolving to >1 offset is
-// surfaced as candidates, never auto-picked), D-04 (coverage-gated core), D-08
-// (noUncheckedIndexedAccess — uses readUInt8 not buf[i]). Mitigates T-02-01 (contiguous
-// under-parse → bounded marker-search recovers all 689), T-02-03 (read past invEnd →
-// every read bounded to [invStart, invEnd)), T-02-05 (false marker match → context-
-// validation rejects), T-02-08 (ambiguous logical field auto-picked → candidates surfaced).
+//   Each stack record (packed contiguously within a tab):
+//     [int32 qty]           at qtyOffset            (the Phase 3 patcher write target)
+//     [uint8 placeholder]   at qtyOffset + 4        (0/1)
+//     [uint8 locked]        at qtyOffset + 5        (0/1)
+//     [7-bit length prefix] at qtyOffset + 6
+//     [item-ID UTF-8 body]  at qtyOffset + 7
+//
+// After the last tab comes the trailing "Chests" registry —
+//   [string "Chests"][int32 0][int32 0][int32 N][int32 0] then N × [string itemId][int32]
+// — an item→count registry, NOT stacks. The walk STOPS after tabCount tabs and never
+// reads it (that was the phantom source). Reads are additionally bounded to [0, invEnd):
+// a corrupt count throws ERR_OUT_OF_RANGE instead of escaping into the trailing zone.
+//
+// FAIL-LOUD (correctness invariant, PROJECT.md): a walk that misaligns onto non-stack
+// bytes would read placeholder/locked > 1 or a negative qty; that throws {@link ParseError}
+// rather than emitting a bad offset. tabCount/stackCount are bounded against the region
+// before looping (anti-DoS, mirrors structural-walk). The editor refuses a save it cannot
+// decode cleanly — never a silently-wrong or phantom-bearing model.
+//
+// Implements: D-01 (offset-keyed stacks — a real duplicate item ID across tabs would be a
+// DISTINCT field, NOT D-03 ambiguity; no fixture exhibits one), D-03 (resolveOne surfaces
+// >1 match as candidates, never auto-picks), D-04 (coverage-gated core), D-08
+// (noUncheckedIndexedAccess — uses readUInt8 not buf[i]). Mitigates the phantom-stack
+// corruption bug (explicit tab-walk, trailing zone never scanned), T-02-03 (read past
+// invEnd → every read bounded to [0, invEnd)), T-02-08 (ambiguous logical field →
+// candidates surfaced via resolveOne).
 /* c8 ignore end */
 
 import { BinaryReader } from './binary-reader';
-import type { FieldCandidate } from './field-table';
+import { ParseError, type FieldCandidate } from './field-table';
 
 /**
  * A recovered Bank Inventory item stack. Each stack is a distinct editable field keyed
@@ -64,119 +89,117 @@ export type ResolveResult =
   | { kind: 'candidates'; candidates: FieldCandidate[] }
   | { kind: 'notFound' };
 
-const MARKER = 'MelvorBase:';
-const MARKER_BYTES = Buffer.from(MARKER, 'utf8');
-const MARKER_LEN = MARKER_BYTES.length;
-const INT32_MAX = 2147483647;
-const STACK_HEADER_WIDTH = 6; // [int32 qty][bool placeholder][bool locked]
+/**
+ * Minimum bytes a single tab occupies even with zero stacks — used only to bound
+ * `tabCount` against the region before looping (anti-DoS, mirrors structural-walk). The
+ * smallest tab is the unnamed default tab: `[3×int32 config][uint16][int32 stackCount]`
+ * = 12 + 2 + 4 = 18 bytes. A conservative floor of 14 never rejects a valid save.
+ */
+const MIN_TAB_FRAMING = 14;
 
 /**
- * Recover every valid item stack in the Bank Inventory component region [invStart, invEnd)
- * via the bounded marker-search + "6-bytes-before-the-length-prefix" recipe (RESEARCH
- * §Pattern 3). A contiguous walk would stop at the first tab boundary (~296 of 689
- * stacks — RESEARCH §Pitfall 1); the marker search finds every `MelvorBase:` hit and
- * context-validates each, recovering all 689 across every tab.
+ * Minimum bytes a single stack record occupies — `[int32 qty][uint8][uint8][1-byte
+ * 7-bit prefix]` = 7 bytes (an empty item ID is impossible but the floor is safe). Used
+ * to bound a tab's `stackCount` against the region before reading its stacks.
+ */
+const MIN_STACK_FRAMING = 7;
+
+/**
+ * Recover every item stack in the Bank Inventory component region [invStart, invEnd) by
+ * an EXPLICIT structural tab-walk. Reads the inventory header
+ * `[int32 reserved][int32 tabCount]`, then walks exactly `tabCount` tabs, reading exactly
+ * each tab's declared `stackCount` records — and STOPS. The trailing "Chests" registry
+ * (the old marker-search's phantom source) is never scanned, so phantom stacks are
+ * structurally impossible rather than heuristically filtered.
  *
- * Every read is bounded to [invStart, invEnd): a candidate whose stack header would fall
- * before `invStart` is skipped (SC-5), and a candidate whose item-ID body would overrun
- * `invEnd` is skipped. False marker matches are rejected by the SC-3 context-validation
- * (prefix == ID byte length, qty in [0, 2^31-1], placeholder/locked raw bytes in {0,1}).
+ * Every read is bounded to [0, invEnd): the walk operates on `buf.subarray(0, invEnd)`, so
+ * a corrupt `tabCount`/`stackCount` throws `ERR_OUT_OF_RANGE` instead of escaping into the
+ * trailing zone. `tabCount` and each `stackCount` are additionally bounded against the
+ * remaining region before looping (anti-DoS, mirrors structural-walk). A record whose
+ * placeholder/locked byte is not in {0,1} or whose qty is negative signals a misaligned
+ * walk and throws {@link ParseError} (fail-loud — the editor refuses rather than emitting a
+ * bad write offset, per the PROJECT.md corruption invariant).
  *
  * @param buf      The decompressed save buffer (read-only — never mutated).
- * @param invStart Inclusive start byte offset of the Inventory component region.
+ * @param invStart Inclusive start byte offset of the Inventory component payload (the
+ *                 `[int32 reserved]` field — i.e. the component's dataStart).
  * @param invEnd   Exclusive end byte offset of the Inventory component region.
- * @returns An array of {@link InventoryStack}, each keyed by a distinct `qtyOffset`.
- *          Duplicate item IDs across tabs appear as separate entries (D-01).
+ * @returns An array of {@link InventoryStack}, each keyed by a distinct `qtyOffset` (the
+ *          int32 quantity's byte offset — the patcher's write target). A real item ID
+ *          appearing in >1 tab yields separate entries (D-01).
+ * @throws {ParseError} the tab list is structurally inconsistent (count overruns the region
+ *          or a record fails the stack-shape tripwire).
+ * @throws {RangeError} a declared length/count reads past the region (bounded reader, T-1-04).
  */
 export function findStacks(buf: Buffer, invStart: number, invEnd: number): InventoryStack[] {
+  // Scope every read to [0, invEnd): offsets stay absolute (subarray shares byte indices
+  // with buf for [0, invEnd)), but any read at or past invEnd throws ERR_OUT_OF_RANGE —
+  // a corrupt count can never walk into the trailing "Chests" registry or past the region.
+  const view = buf.subarray(0, invEnd);
+  const reader = new BinaryReader(view);
+  reader.seek(invStart);
+
+  // Inventory header: [int32 reserved][int32 tabCount]. `reserved` is 0 in every observed
+  // save and is not an edit target; `tabCount` drives the walk length.
+  reader.readInt32(); // reserved inventory-level flag (unused)
+  const tabCount = reader.readInt32();
+  // Bound tabCount against the region BEFORE looping (T-02-01 — a giant count must not
+  // drive an unbounded loop). Each tab needs at least MIN_TAB_FRAMING bytes.
+  if (tabCount < 0 || tabCount * MIN_TAB_FRAMING > invEnd - reader.offset) {
+    throw new ParseError(
+      `inventory tabCount ${tabCount} exceeds region capacity (remaining ${invEnd - reader.offset} bytes, min ${MIN_TAB_FRAMING}/tab)`,
+    );
+  }
+
   const stacks: InventoryStack[] = [];
-  let searchFrom = invStart;
-
-  while (searchFrom < invEnd) {
-    // Find the next 'MelvorBase:' marker within [searchFrom, invEnd). buf.indexOf returns
-    // -1 when no more matches; a hit at or past invEnd is out of region (SC-5).
-    const hit = buf.indexOf(MARKER_BYTES, searchFrom);
-    if (hit === -1 || hit >= invEnd) break;
-
-    // The 7-bit length prefix sits one byte before the item-ID body. It must be in region.
-    const prefixOffset = hit - 1;
-    if (prefixOffset < invStart) {
-      searchFrom = hit + 1;
-      continue;
+  for (let t = 0; t < tabCount; t++) {
+    // Tab 0 is the unnamed default tab (3-int32 config); tabs 1+ carry a [string name]
+    // and a 4-int32 config. Both end with [uint16 sentinel][int32 stackCount].
+    if (t > 0) {
+      reader.readString(); // tab display name (e.g. "Tab 1") — not an edit target
     }
-    const prefixByte = buf.readUInt8(prefixOffset); // throws ERR_OUT_OF_RANGE if OOB (T-1-04)
-
-    // SC-3 false-match guard: the prefix must equal the item-ID byte length. Since we found
-    // 'MelvorBase:' (10 bytes) at `hit`, the declared body must be at least 10 bytes. A
-    // prefix shorter than the marker itself means the "match" is a coincidental byte
-    // pattern, not a real item ID (T-02-05).
-    if (prefixByte < MARKER_LEN) {
-      searchFrom = hit + 1;
-      continue;
+    const configInts = t === 0 ? 3 : 4;
+    for (let k = 0; k < configInts; k++) {
+      reader.readInt32(); // tab config (capacity / lock flags) — opaque, not edited
+    }
+    reader.seek(reader.offset + 2); // uint16 sentinel (1 in all observed saves)
+    const stackCount = reader.readInt32();
+    // Bound stackCount against the remaining region before reading its records.
+    if (stackCount < 0 || stackCount * MIN_STACK_FRAMING > invEnd - reader.offset) {
+      throw new ParseError(
+        `inventory tab ${t} stackCount ${stackCount} exceeds region capacity (remaining ${invEnd - reader.offset} bytes, min ${MIN_STACK_FRAMING}/stack)`,
+      );
     }
 
-    // SC-5: the item-ID body [hit, hit + prefixByte) must lie within [invStart, invEnd).
-    if (hit + prefixByte > invEnd) {
-      searchFrom = hit + 1;
-      continue;
+    for (let i = 0; i < stackCount; i++) {
+      const qtyOffset = reader.offset; // the int32 quantity offset — the patcher write target
+      const qty = reader.readInt32();
+      // Raw placeholder/locked bytes (read directly so we can validate {0,1} — readBool
+      // would swallow a stray byte like 0x05 as `true` and hide a misaligned walk).
+      const placeholderRaw = view.readUInt8(reader.offset);
+      const lockedRaw = view.readUInt8(reader.offset + 1);
+      reader.seek(reader.offset + 2);
+      const itemId = reader.readString();
+
+      // Fail-loud tripwire: in a correctly aligned tab-walk these are always genuine
+      // booleans and qty >= 0. A violation means the walk drifted onto non-stack bytes —
+      // throw rather than emit a bad qtyOffset the patcher would write to (corruption
+      // invariant: refuse, never silently misalign).
+      if (placeholderRaw > 1 || lockedRaw > 1 || qty < 0) {
+        throw new ParseError(
+          `inventory tab ${t} stack ${i} @${qtyOffset}: malformed record ` +
+            `(qty=${qty} placeholder=${placeholderRaw} locked=${lockedRaw}) — tab walk misaligned`,
+        );
+      }
+
+      stacks.push({
+        qtyOffset,
+        itemId,
+        qty,
+        placeholder: placeholderRaw === 1,
+        locked: lockedRaw === 1,
+      });
     }
-
-    // The stack header sits 6 bytes before the 7-bit prefix: (hit - 1) - 6 = hit - 7.
-    // [int32 qty][bool placeholder][bool locked] = 6 bytes.
-    const stackStart = prefixOffset - STACK_HEADER_WIDTH;
-    // SC-5: a stack header before invStart is out of region — skip (T-02-03).
-    if (stackStart < invStart) {
-      searchFrom = hit + 1;
-      continue;
-    }
-    // The 6-byte stack header must also lie within the region.
-    if (stackStart + STACK_HEADER_WIDTH > invEnd) {
-      searchFrom = hit + 1;
-      continue;
-    }
-
-    // Read the item-ID body and the stack header via a scoped BinaryReader. Constructing
-    // the reader on buf.subarray(stackStart, hit + prefixByte) scopes every read to the
-    // region; BinaryReader.readInt32 / readBool throw ERR_OUT_OF_RANGE on OOB (T-1-04).
-    const itemId = buf.subarray(hit, hit + prefixByte).toString('utf8');
-
-    // Read the raw placeholder/locked bytes BEFORE readBool so we can validate {0,1}
-    // (readBool returns `b !== 0` — it would swallow a byte like 0x05 as `true`, which
-    // is a false-match signal we must reject per SC-3).
-    const placeholderRaw = buf.readUInt8(stackStart + 4);
-    const lockedRaw = buf.readUInt8(stackStart + 5);
-
-    // SC-3 context-validation: placeholder/locked must be genuine booleans (raw byte 0 or 1).
-    // A byte > 1 indicates a non-stack byte pattern (T-02-05 false match).
-    if (placeholderRaw !== 0 && placeholderRaw !== 1) {
-      searchFrom = hit + 1;
-      continue;
-    }
-    if (lockedRaw !== 0 && lockedRaw !== 1) {
-      searchFrom = hit + 1;
-      continue;
-    }
-
-    // Read the int32 qty. readInt32LE returns a signed 32-bit value; SC-3 requires [0, 2^31-1].
-    const reader = new BinaryReader(buf.subarray(stackStart, stackStart + STACK_HEADER_WIDTH));
-    const qty = reader.readInt32();
-    // SC-3: a negative qty is a false-match / corrupted-byte signal, not a real stack.
-    if (qty < 0 || qty > INT32_MAX) {
-      searchFrom = hit + 1;
-      continue;
-    }
-
-    stacks.push({
-      qtyOffset: stackStart,
-      itemId,
-      qty,
-      placeholder: placeholderRaw === 1,
-      locked: lockedRaw === 1,
-    });
-
-    // Advance past this marker to find the next one. Multiple stacks of the same item ID
-    // across tabs are distinct entries (D-01 — each gets its own qtyOffset).
-    searchFrom = hit + 1;
   }
 
   return stacks;

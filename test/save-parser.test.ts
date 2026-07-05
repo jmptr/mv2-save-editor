@@ -7,8 +7,8 @@
 // dataStart, 02-03 parseExperience at every skill's Experience dataStart, 02-04 findStacks
 // at the Bank's Inventory region), and assembles one FieldTable.
 //
-// SC-1: full fixture parse — version 20, summary (Bob/Test/1366/953063625/6511), 689
-//   stacks, Woodcutting xp 7439645.20000645 / cap 120 / level 93.
+// SC-1: full fixture parse — version 20, summary (Bob/Test/1366/953063625/6511), 301 real
+//   stacks (phantom Chests registry excluded), Woodcutting xp 7439645.20000645 / cap 120 / level 93.
 // SC-2: Bank wallet int64 currencies authoritative (write targets); SaveHeader GP/SC
 //   readOnly mirrors (never written). Phase 3's patcher reads the authoritative flag.
 // SC-4: ViewModel derived by projection (offset-free); re-parse yields identical
@@ -44,7 +44,7 @@ const FIXTURE = loadFixtureBuffer();
 //   Wallet dataStart 20507, count 3 — GoldPieces @ 20511 = 953063625n (authoritative),
 //     PrayerPoints @ 20541 = 987361n (not authoritative), SlayerCoins @ 20573 = 6511n
 //     (authoritative)
-//   Inventory region [710, 20496) — 689 stacks; NormalLog @ qtyOffset 736 = 48652
+//   Inventory region [710, 20496) — 301 real stacks; NormalLog @ qtyOffset 736 = 48652
 //   Woodcutting Experience dataStart 47405, size 16 — xp @ 47405 = 7439645.20000645
 //     (double), levelCap @ 47413 = 120 (readOnly), level @ 47417 = 93
 
@@ -217,9 +217,12 @@ describe('parseSave — ViewModel projection from the full fixture (SC-1, SC-2, 
     assert.equal(viewModel.summary.slayerCoins, '6511');
   });
 
-  test('viewModel.bankItems has 689 entries (one per stack across all tabs, SC-1)', () => {
+  test('viewModel.bankItems has 301 entries (one per REAL stack across the tabs, SC-1)', () => {
     const { viewModel } = parseSave(FIXTURE);
-    assert.equal(viewModel.bankItems.length, 689);
+    // 301 = 296 (default tab) + 5 (Tab 1). The trailing "Chests" registry (388 item-id
+    // entries) is NOT scanned — those were the phantom stacks (old marker-search returned
+    // 689 = 301 + 388). See docs/bank-inventory-phantom-stacks.md.
+    assert.equal(viewModel.bankItems.length, 301);
     // Spot-check NormalLog: itemId, quantity, isPlaceholder, isLocked (D-01 free metadata).
     const normalLog = viewModel.bankItems.find((b) => b.itemId === 'MelvorBase:NormalLog');
     assert.ok(normalLog, 'NormalLog present in the viewModel bank items');
@@ -230,27 +233,27 @@ describe('parseSave — ViewModel projection from the full fixture (SC-1, SC-2, 
     assert.equal(normalLog!.fieldKey, 'bank.inventory.MelvorBase:NormalLog#0');
   });
 
-  test('duplicate itemIds get distinct #<n> keys and every fieldKey resolves to its qty (EDIT-02, T-05-01/T-05-03)', () => {
+  test('occurrence-indexed #<n> keys are unique and every fieldKey resolves to its qty (EDIT-02, T-05-01/T-05-03)', () => {
     const { fieldTable, viewModel } = parseSave(FIXTURE);
 
-    // (a) A known duplicate itemId (the fixture has two MelvorBase:NormalLog stacks) gets
-    //     distinct occurrence-indexed keys #0 and #1 — offset-free, yet unique per stack.
-    const normalLogs = viewModel.bankItems.filter((b) => b.itemId === 'MelvorBase:NormalLog');
-    assert.ok(normalLogs.length >= 2, 'fixture has >=2 NormalLog stacks (duplicate itemId)');
-    assert.equal(normalLogs[0]!.fieldKey, 'bank.inventory.MelvorBase:NormalLog#0');
-    assert.equal(normalLogs[1]!.fieldKey, 'bank.inventory.MelvorBase:NormalLog#1');
-    assert.notEqual(normalLogs[0]!.fieldKey, normalLogs[1]!.fieldKey, 'distinct keys per stack');
-    // Neither key encodes a byte offset (SC-4 / T-05-03) — no '@' + no digit-only offset segment.
-    for (const b of normalLogs) {
+    // (a) The first occurrence of an itemId gets the #0 suffix — offset-free, yet unique per
+    //     stack (a real itemId recurring across tabs would get #0, #1, … in walk order; no
+    //     fixture item recurs now that phantoms are excluded, but the mechanism is unchanged).
+    const normalLog = viewModel.bankItems.find((b) => b.itemId === 'MelvorBase:NormalLog');
+    assert.ok(normalLog, 'NormalLog present');
+    assert.equal(normalLog!.fieldKey, 'bank.inventory.MelvorBase:NormalLog#0');
+    // No key encodes a byte offset (SC-4 / T-05-03) — no '@<offset>' segment.
+    for (const b of viewModel.bankItems) {
       assert.ok(!b.fieldKey.includes('@'), 'no @<offset> in the key (offset-free)');
     }
 
-    // (b) For EVERY bank item, its fieldKey resolves in the FieldTable to an entry whose
-    //     value equals the stack quantity (round-trip: main re-resolves the exact key on
-    //     preview/write — T-05-01 deterministic resolution). Also proves uniqueness: 689
-    //     distinct keys for 689 stacks (a collision would make a later stack overwrite an
-    //     earlier FieldEntry and the value would mismatch).
-    assert.equal(viewModel.bankItems.length, 689);
+    // (b) Every fieldKey is UNIQUE and resolves in the FieldTable to an entry whose value
+    //     equals the stack quantity (round-trip: main re-resolves the exact key on
+    //     preview/write — T-05-01). Uniqueness: 301 distinct keys for 301 stacks (a collision
+    //     would make a later stack overwrite an earlier FieldEntry and the value would mismatch).
+    assert.equal(viewModel.bankItems.length, 301);
+    const keys = new Set(viewModel.bankItems.map((b) => b.fieldKey));
+    assert.equal(keys.size, 301, '301 distinct occurrence-indexed keys (no collisions)');
     for (const b of viewModel.bankItems) {
       const entry = fieldTable.get(b.fieldKey);
       assert.ok(entry, `fieldKey ${b.fieldKey} resolves in the FieldTable`);
@@ -342,7 +345,7 @@ describe('parseSave — version tolerance: unknown version warns-but-parses (SC-
     assert.equal(viewModel.summary.gp, '953063625');
     assert.equal(viewModel.summary.slayerCoins, '6511');
     assert.equal(viewModel.entityIds.length, 33);
-    assert.equal(viewModel.bankItems.length, 689);
+    assert.equal(viewModel.bankItems.length, 301);
 
     // The FieldTable is intact too — wallet authoritative + header mirrors still present.
     assert.equal(fieldTable.get('wallet.GoldPieces')!.value, 953063625n);

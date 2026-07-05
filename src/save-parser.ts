@@ -10,7 +10,7 @@
 //     - the Bank (entity whose components include 'Wallet' AND 'Inventory' — located by
 //       component NAMES, not a hard-coded entity ID, T-02-05) → parseWallet at the
 //       Wallet dataStart (authoritative int64 GP/SC) + findStacks at the Inventory
-//       [dataStart, dataStart+size) region (689 stacks);
+//       [dataStart, dataStart+size) region (explicit tab-walk — real stacks only);
 //     - every entity with an 'Experience' component (a skill, RESEARCH A3 — Combat may
 //       surface as an XP-bearing entry) → parseExperience at the Experience dataStart,
 //       re-keyed from experience.{xp,levelCap,level} to skill.<entityId>.{...} for
@@ -186,7 +186,9 @@ export function parseSave(buffer: Buffer): ParsedSave {
       const walletEntries = parseWallet(reader, walletComp.dataStart);
       for (const e of walletEntries) fieldTable.add(e);
 
-      // Inventory → bounded marker-search, 689 stacks (02-04). Each stack becomes 3
+      // Inventory → explicit structural tab-walk, real stacks only (02-04; the trailing
+      // "Chests" registry is never scanned — see docs/bank-inventory-phantom-stacks.md).
+      // Each stack becomes 3
       // FieldEntries keyed by `bank.inventory.<itemId>#<occurrenceIndex>{,.placeholder,.locked}`
       // — the #<occurrenceIndex> (a per-itemId counter assigned in deterministic walk
       // order) ensures uniqueness for duplicate item IDs across tabs (D-01 — duplicate
