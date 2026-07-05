@@ -387,6 +387,21 @@ export function patchSave(buffer: Buffer, fieldTable: FieldTable, edits: Edit[])
   // 3. Any violation → throw with the FULL list; write NOTHING (atomic, D-01).
   if (violations.length > 0) throw new ValidationError(violations);
 
+  // 3.5. Currency mirror coupling (correctness fix — verified in-game): an authoritative wallet
+  //   currency (GP/SlayerCoins) has a cosmetic header snapshot the GAME reads on LOAD (offset
+  //   129/137). That header entry is readOnly (never a user target) but MUST be kept in lock-step
+  //   or the edit is invisible in-game until the next in-game save (the docs' "cosmetic — updates
+  //   on next save" note only describes the write-back direction, not the load-time read). Expand
+  //   each planned write to also write its mirror(s) to the SAME value — same width, in-place
+  //   (SC-1). Analogous to the skill level↔xp coupling above; mirrors of a non-currency key → none.
+  const mirrorWrites: PlannedWrite[] = [];
+  for (const w of writes) {
+    for (const mirror of fieldTable.mirrorsOf(w.fieldKey)) {
+      mirrorWrites.push({ fieldKey: mirror.key, entry: mirror, value: w.value });
+    }
+  }
+  writes.push(...mirrorWrites);
+
   // 4. Write onto a length-exact copy (input never mutated — D-04; same width → SC-1).
   const out = Buffer.from(buffer);
   const changeReport: ChangeReportRow[] = [];

@@ -230,6 +230,22 @@ export class FieldTable {
     }
     return entry;
   }
+
+  /**
+   * Return every resolved entry whose {@link FieldEntry.mirrors} points at {@link authoritativeKey}
+   * — i.e. the cosmetic snapshots that shadow an authoritative field (SC-2). The Bank wallet's
+   * `GoldPieces`/`SlayerCoins` each have one header mirror (`header.GP`/`header.SlayerCoins`); the
+   * GAME reads those header snapshots on load, so the patcher must write them in lock-step with the
+   * authoritative wallet value or the edit is invisible in-game until the next in-game save. Returns
+   * an empty array for a key with no mirror. Read-only for callers — never mutate the entries.
+   */
+  mirrorsOf(authoritativeKey: string): FieldEntry[] {
+    const out: FieldEntry[] = [];
+    for (const entry of this.entries.values()) {
+      if (entry.mirrors === authoritativeKey) out.push(entry);
+    }
+    return out;
+  }
   // The closing brace of an `export class` is where esbuild source-maps the
   // __export/__toCommonJS/__copyProps interop helper's defensive "key already on target"
   // arm — it never fires for a real require'd module (NOT FieldTable logic). Ignoring

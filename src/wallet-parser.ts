@@ -13,8 +13,10 @@
 //
 // SC-2: GP and SlayerCoins FieldEntries are marked authoritative:true — they are the real
 //   write targets Phase 3's patcher edits. The SaveHeader GP/SlayerCoins FieldEntries 02-02
-//   emits are readOnly mirrors (`mirrors: 'wallet.GoldPieces'/'wallet.SlayerCoins'`) that
-//   NEVER get written. PrayerPoints is present but NOT authoritative (not a v1 edit target).
+//   emits are readOnly mirrors (`mirrors: 'wallet.GoldPieces'/'wallet.SlayerCoins'`): a user
+//   edit can never TARGET them, but the patcher writes them in lock-step with the authoritative
+//   wallet value (the game reads the header snapshot on LOAD, so a wallet-only patch is invisible
+//   in-game — verified 2026-07; see patcher.ts §3.5). PrayerPoints is present but NOT authoritative.
 //
 // D-03 fail-loud: GoldPieces is REQUIRED. A Wallet lacking GoldPieces (e.g. a hypothetical
 //   gamemode that omits it) throws RequiredFieldMissingError — never emits a silently-wrong

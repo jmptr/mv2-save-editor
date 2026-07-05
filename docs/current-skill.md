@@ -98,8 +98,11 @@ idx = dec.index(gp_bytes, bank_start)
 struct.pack_into('<q', dec, idx, new_gp)
 ```
 
-**Tip**: The GP in the SaveHeader is a cosmetic snapshot and updates automatically on next save.
-Only patch the wallet value.
+**IMPORTANT — patch BOTH copies**: GP/SlayerCoins exist twice — the authoritative value in the
+Bank Wallet AND a snapshot in the SaveHeader. The game reads the **header snapshot on load**, so
+patching only the wallet leaves the edit invisible in-game (the header only self-updates on the
+*next in-game save*, not on load). Verified in-game 2026-07: a wallet-only Slayer Coins edit did
+not take effect until the header copy was also patched. Always write both offsets to the same value.
 
 ---
 
@@ -298,7 +301,8 @@ def find_entity_offset(dec, header_end, entity_id):
 - **Bank item quantities** are `int32` (max 2,147,483,647)
 - **GP/currency** values are `int64` (max ~9.2 quintillion)
 - **Skill XP** is `double`; **Level** is `int32`
-- The save header's GP/SlayerCoins fields are cosmetic — they update on next in-game save
+- The save header's GP/SlayerCoins fields are a snapshot the game READS ON LOAD — patch them in
+  lock-step with the authoritative Bank Wallet value (they only self-update on the next in-game save)
 - The save version is `17` for Alpha 0.9.1; check `SaveVersion` enum if version checks fail
 - Region size prefixes don't need updating for in-place value edits (same byte width)
 - Adding new items/entries requires updating region sizes — complex, avoid if possible

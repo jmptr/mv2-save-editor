@@ -289,6 +289,50 @@ describe('patchSave — EDIT-04 XP↔Level coupling (D-02)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// SC-2 — authoritative currency ↔ cosmetic header-mirror coupling
+// (verified in-game: the game reads the header snapshot on LOAD, so a wallet-only
+//  patch is invisible until the next in-game save — the mirror MUST be written too)
+// ---------------------------------------------------------------------------
+
+describe('patchSave — currency↔header-mirror coupling (SC-2)', () => {
+  const GP_MIRRORS = FT.mirrorsOf(GP_KEY);
+  // Fixture-drift guard: GP must have exactly its one readOnly header snapshot.
+  assert.equal(GP_MIRRORS.length, 1, 'wallet.GoldPieces has exactly one header mirror');
+  const GP_MIRROR = GP_MIRRORS[0]!;
+  assert.equal(GP_MIRROR.key, 'header.GP', 'the GP mirror is header.GP');
+  assert.equal(GP_MIRROR.readOnly, true, 'the header mirror is readOnly (never a user target)');
+
+  test('editing an authoritative currency also writes its header mirror to the SAME value', () => {
+    const NEW = 987654321n;
+    const { buffer: out, changeReport } = patchSave(FIXTURE, ft(), [
+      { fieldKey: GP_KEY, newValue: NEW },
+    ]);
+    const walletRow = changeReport.find((r) => r.fieldKey === GP_KEY);
+    const mirrorRow = changeReport.find((r) => r.fieldKey === GP_MIRROR.key);
+    assert.ok(walletRow, 'authoritative wallet write row present');
+    assert.ok(mirrorRow, 'coupled header mirror write row present');
+    assert.equal(walletRow!.newValue, NEW);
+    assert.equal(mirrorRow!.newValue, NEW, 'mirror written to the same value as the wallet');
+    // The actual bytes at BOTH offsets carry the new value (the in-game correctness fix).
+    assert.equal(out.readBigInt64LE(FT.get(GP_KEY)!.offset), NEW, 'wallet bytes updated');
+    assert.equal(out.readBigInt64LE(GP_MIRROR.offset), NEW, 'header snapshot bytes updated');
+  });
+
+  test('a non-currency edit (bank qty) produces no mirror write', () => {
+    const { changeReport } = patchSave(FIXTURE, ft(), [{ fieldKey: BANK_QTY_KEY, newValue: 7 }]);
+    assert.equal(changeReport.length, 1, 'a bank qty edit is a single write (no mirror)');
+    assert.equal(changeReport[0]!.fieldKey, BANK_QTY_KEY);
+  });
+
+  test('directly targeting a header mirror is still rejected (only internal coupling writes it)', () => {
+    assert.throws(
+      () => patchSave(FIXTURE, ft(), [{ fieldKey: GP_MIRROR.key, newValue: 500n }]),
+      (err: unknown) => err instanceof ReadOnlyFieldError,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // SC-4 — self-verify diff + re-parse + codec round-trip
 // ---------------------------------------------------------------------------
 
