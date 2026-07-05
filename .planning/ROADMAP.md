@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Format Parser + FieldTable Model** - Walk the documented layout into a fresh-offset FieldTable + JSON view model (completed 2026-07-04)
 - [x] **Phase 3: Patcher + Validation + XP Table** - Same-width patch engine, range/type validation, and XP-table-consistent skill edits (completed 2026-07-04)
 - [x] **Phase 4: Electron Shell + Secure IPC + Non-Destructive Write** - Trusted main process owns bytes/fs/Brotli; narrow IPC; writes a new file (completed 2026-07-04)
-- [ ] **Phase 5: Renderer UI — Browse, Search, Edit, Preview** - User-facing loop: summary, searchable lists, validated edits, preview/confirm
+- [x] **Phase 5: Renderer UI — Browse, Search, Edit, Preview** - User-facing loop: summary, searchable lists, validated edits, preview/confirm (completed 2026-07-05)
 
 ## Phase Details
 
@@ -125,7 +125,7 @@ Plans:
   4. The user reviews a pending-changes preview (field, old → new) and must explicitly confirm before any write occurs. [SAFE-02]
   5. Confirming writes a new `.sav`, shows the output path, and the edited save loads in-game with the new values persisting after an in-game re-save (mandatory manual in-game acceptance).
 
-**Plans**: 7/8 plans executed
+**Plans**: 8/8 plans complete
 Plans:
 **Wave 1**
 
@@ -145,7 +145,7 @@ Plans:
 
 **Wave 4** *(depends on Wave 3)*
 
-- [ ] 05-08-PLAN.md — App orchestrator + renderer.tsx mount + full build + manual in-game acceptance (criterion 5)
+- [x] 05-08-PLAN.md — App orchestrator + renderer.tsx mount + full build + manual in-game acceptance (criterion 5)
 
 **UI hint**: yes
 
@@ -160,4 +160,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Format Parser + FieldTable Model | 5/5 | Complete    | 2026-07-04 |
 | 3. Patcher + Validation + XP Table | 2/2 | Complete    | 2026-07-04 |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | 5/5 | Complete    | 2026-07-04 |
-| 5. Renderer UI — Browse, Search, Edit, Preview | 7/8 | In Progress|  |
+| 5. Renderer UI — Browse, Search, Edit, Preview | 8/8 | Complete   | 2026-07-05 |
