@@ -122,9 +122,9 @@ describe('findStacks — save_35a third-fixture triangulation', () => {
   const buf = loadFixtureFile('test/fixtures/save_35a73127-3468-47a8-b69d-a5952afaac1b.sav');
   const region = locateInventoryRegion(buf);
 
-  test('recovers 330 stacks and no phantom @12548', () => {
+  test('recovers 331 stacks and no phantom @12548', () => {
     const stacks = findStacks(buf, region.invStart, region.invEnd);
-    assert.equal(stacks.length, 330, '330 real stacks (same tab structure as MahoganyLog-103)');
+    assert.equal(stacks.length, 331, '331 real stacks (324 tab0 + 7 tab1 — one more tab-0 stack than MahoganyLog-103)');
     assert.ok(!stacks.some((s) => s.qtyOffset === 12548), 'no phantom in the trailing registry');
   });
 });

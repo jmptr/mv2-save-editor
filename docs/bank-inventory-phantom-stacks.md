@@ -43,7 +43,7 @@ fixtures in `test/inventory-parser.test.ts`; `test/save-parser.test.ts` updated 
 ## Verified
 - MahoganyLog-103 → 330 stacks incl. real `@944=103`, excludes phantom `@12548`.
 - test-fixture → 301 real stacks (old 689 = 301 real + 388 phantom Chests-registry ids).
-- save_35a → 330 stacks. Zero genuine cross-tab duplicate items in any fixture.
+- save_35a → 331 stacks (324 tab0 + 7 tab1). Zero genuine cross-tab duplicate items in any fixture.
 - Patcher: editing MahoganyLog resolves to the single `@944`; `patchSave` self-verify +
   brotli round-trip pass; re-parse reads back the edit. Suite 272/272; parser 100% coverage.
 - **In-game confirmed:** user edited a previously-duplicated bank item (now shows once), wrote
