@@ -15,25 +15,26 @@ editor must always produce a `.sav` the game can load without corruption.
 
 ## Requirements
 
-### Validated
+### Validated (v1.0)
 
-- ✓ Validate edited values against type/range limits before writing — Phase 3 (patcher rejects
-  out-of-range / readOnly / unknown / conflicting edits, collecting all violations, writing nothing
-  on any failure; confirmed by an in-game load of a patched save)
-- ✓ Edit skill XP and Level consistently with the XP table — Phase 3 (engine level: a verified
-  StandardExperienceTable couples XP↔Level on every skill edit; still to be surfaced in the UI)
+- ✓ Load a `.sav` file: decompress (Brotli) and parse the documented binary layout, offsets fresh every load — v1.0 (IO-01)
+- ✓ Write a valid `.sav` (Brotli-recompressed) to a new output file, leaving the original untouched — v1.0 (IO-02)
+- ✓ No-op load→save is byte-identical (decompressed) and every write enforces `output.length === input.length` — v1.0 (IO-03)
+- ✓ Display a character/save summary (name, gamemode, GP, Slayer Coins, total level) — v1.0 (BROWSE-01)
+- ✓ Browse a searchable list of bank items with their current quantities — v1.0 (BROWSE-02, BROWSE-04)
+- ✓ Browse a searchable list of skills with their current XP and level — v1.0 (BROWSE-03, BROWSE-05)
+- ✓ Edit GP and Slayer Coins (int64, in the Bank wallet, in-place) — v1.0 (EDIT-01)
+- ✓ Edit bank item quantities (int32, in-place) — v1.0 (EDIT-02)
+- ✓ Edit skill XP and Level (double / int32, in-place, consistent with the XP table) — v1.0 (EDIT-03), engine from Phase 3 surfaced in the Phase 5 UI
+- ✓ Set a skill by target Level; auto-compute XP from the StandardExperienceTable — v1.0 (EDIT-04)
+- ✓ Validate edited values against type/range limits before writing (reject-never-clamp, all violations collected) — v1.0 (SAFE-01)
+- ✓ Preview/confirm a summary of pending changes before writing — v1.0 (SAFE-02)
 
 ### Active
 
-- [ ] Load a `.sav` file: decompress (Brotli) and parse the documented binary layout
-- [ ] Display a character/save summary (name, gamemode, GP, Slayer Coins, total level)
-- [ ] Browse a searchable list of bank items with their current quantities
-- [ ] Browse a searchable list of skills with their current XP and level
-- [ ] Edit GP and Slayer Coins (int64, in-place)
-- [ ] Edit bank item quantities (int32, in-place)
-- [ ] Edit skill XP and Level (double / int32, in-place, consistent with the XP table) — engine done (Phase 3); UI wiring pending
-- [ ] Preview/confirm a summary of pending changes before writing
-- [ ] Write a valid `.sav` (Brotli-recompressed) to a new output file, leaving the original untouched
+(None — v1.0 shipped the full MVP scope. Next milestone's requirements defined via `/gsd-new-milestone`.)
+
+Candidate directions carried from the v1 requirements' v2 list (not yet committed): human-readable item/skill names (NAME-01), bulk edits (BULK-01/02), timestamped output + round-trip self-check on load (OUT-01/02), header/character editing (HEADER-01).
 
 ### Out of Scope
 
@@ -80,11 +81,12 @@ editor must always produce a `.sav` the game can load without corruption.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Desktop app (not browser/CLI) | Native file open/save feel for a personal tool | — Pending |
-| In-place edits only for v1 | Avoids byte insertion + region-size rewrites (corruption risk) | ✓ Proven — Phase 3 patcher does same-width writes (output.length === input.length) with a re-parse self-verify |
-| Browse loaded save (searchable lists) over targeted-only editor | Much easier to find and edit values; worth the extra build | — Pending |
-| Non-destructive write to new file + validate + preview | Corrupted saves are the worst failure; keep mistakes recoverable | ✓ Validate proven — Phase 3 rejects-before-write, collects all violations; write-to-new-file + preview are Phase 4/5 |
-| Lean Electron + TypeScript (research to confirm) | Native Brotli in Node + existing Node scaffold | — Pending |
+| Desktop app (not browser/CLI) | Native file open/save feel for a personal tool | ✓ Good — Electron app ships native OS open/save dialogs; used daily |
+| In-place edits only for v1 | Avoids byte insertion + region-size rewrites (corruption risk) | ✓ Proven — Phase 3 patcher does same-width writes (output.length === input.length) with a re-parse self-verify; held across v1.0 |
+| Browse loaded save (searchable lists) over targeted-only editor | Much easier to find and edit values; worth the extra build | ✓ Good — Phase 5 virtualized, filter-as-you-type bank + skill lists |
+| Non-destructive write to new file + validate + preview | Corrupted saves are the worst failure; keep mistakes recoverable | ✓ Proven end-to-end — Phase 3 reject-before-write + Phase 4 new-file write (source byte-unchanged) + Phase 5 SAFE-02 confirm gate |
+| Lean Electron + TypeScript (research to confirm) | Native Brotli in Node + existing Node scaffold | ✓ Good — Electron 43 main process; `node:zlib` Brotli + `Buffer` LE, zero binary-format deps |
+| Bank Inventory: explicit tab-walk over loose marker-search | Marker-search leaked phantom stacks from the trailing "Chests" registry → editing one reverted the whole bank in-game | ✓ Good — post-v1.0 fix (b4ac6c4); structural walk makes phantoms impossible, confirmed in-game |
 
 ## Evolution
 
@@ -103,5 +105,17 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
+## Current State
+
+**Shipped:** v1.0 MVP (2026-07-05) — 5 phases, 23 plans, all 14 v1 requirements validated.
+
+The complete load→browse/search→edit→preview→write loop works end-to-end: an app-written `.sav` loads in Melvor Idle 2 with edits persisting. Tech stack: Electron 43 + TypeScript (strict), React 19 renderer, `@tanstack/react-virtual` lists, `node:zlib` Brotli + `Buffer` LE primitives (int64 as BigInt), esbuild build, `tsx --test` + c8. ~4,500 LOC source (src/ + electron/), ~4,200 LOC tests; suite 272/272 green, format-core modules at 100% line+branch coverage.
+
+**Known post-ship work:** the phantom-stack bank-corruption bug (surfaced at v1.0 in-game acceptance) is fixed and confirmed (b4ac6c4). Blind spot: the Inventory tab-walk is only proven against 2-tab saves — 3+ tab saves would fail-loud (throw) rather than misparse, which is safe.
+
+## Next Milestone Goals
+
+To be defined via `/gsd-new-milestone`. Leading candidates from the deferred v2 list: human-readable item/skill names (NAME-01), bulk edits (BULK-01/02), timestamped output + load-time round-trip self-check (OUT-01/02), header/character editing (HEADER-01).
+
 ---
-*Last updated: 2026-07-04 after Phase 3 (Patcher + Validation + XP Table) — headless correctness core complete: primitives+codec (P1), parser+FieldTable (P2), patch engine+validation+XP table (P3), all proven against a real save and an in-game load*
+*Last updated: 2026-07-05 after v1.0 MVP milestone — full save-editor loop shipped and validated in-game (14/14 requirements); post-ship phantom-stack fix landed*

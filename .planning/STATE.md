@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 05
-status: verifying
-stopped_at: Phase 5 context gathered
-last_updated: "2026-07-05T14:38:46.093Z"
-last_activity: 2026-07-05
-last_activity_desc: Phase 05 complete
+current_phase: 0
+status: Awaiting next milestone
+stopped_at: v1.0 MVP shipped and archived (tag v1.0); awaiting /gsd-new-milestone
+last_updated: "2026-07-06T00:04:55.629Z"
+last_activity: 2026-07-06
+last_activity_desc: Milestone v1.0 completed and archived
 progress:
   total_phases: 5
   completed_phases: 5
@@ -24,16 +24,14 @@ current_phase_name: renderer-ui-browse-search-edit-preview
 See: .planning/PROJECT.md (updated 2026-07-04)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** Phase 05 — renderer-ui-browse-search-edit-preview
+**Current focus:** v1.0 MVP shipped — planning next milestone
 
 ## Current Position
 
-Phase: 05
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-07-05 — Phase 05 complete
-
-Progress: milestone [██████░░░░] 60% (3 of 5 phases complete)
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-06 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -162,3 +160,7 @@ Items acknowledged and carried forward from previous milestone close:
 Last session: 2026-07-05 (resumed)
 Stopped at: v1.0 milestone complete + verified; starting /gsd-debug on bank phantom-stack bug (src/inventory-parser.ts marker-search surfaces phantom editable stacks)
 Resume file: docs/bank-inventory-phantom-stacks.md (open-bug diagnosis)
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
