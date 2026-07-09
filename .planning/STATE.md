@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Packaging & Distribution
 current_phase: 6
-current_phase_name: Packaging — Local Windows NSIS Installer
-status: planned
+current_phase_name: packaging-local-windows-nsis-installer
+status: executing
 stopped_at: Phase 6 planned — 3 plans, ready to execute
-last_updated: "2026-07-09T16:17:30.185Z"
+last_updated: "2026-07-09T16:34:28.639Z"
 last_activity: 2026-07-09
-last_activity_desc: Phase 6 planned — 3 plans (icon, config wiring, manual Windows gate), verification passed
+last_activity_desc: Phase 6 execution started
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-09)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** v1.1 Packaging & Distribution — Windows NSIS installer + electron-updater self-update + CI publish-on-tag (unsigned).
+**Current focus:** Phase 6 — packaging-local-windows-nsis-installer
 
 ## Current Position
 
-Phase: 6 of 8 (Packaging — Local Windows NSIS Installer)
-Plan: 3 plans (06-01 icon · 06-02 config wiring · 06-03 manual Windows gate)
-Status: Phase 6 planned — verification passed, ready to execute
-Last activity: 2026-07-09 — Phase 6 planned (3 plans, 2 waves); research + pattern map + validation strategy complete
+Phase: 6 (packaging-local-windows-nsis-installer) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-07-09 — Phase 6 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -65,6 +65,7 @@ Full decision log lives in PROJECT.md Key Decisions table. Decisions shaping v1.
 - electron-builder packages the existing `dist/`; it does NOT rebuild TS — CI must run `build:electron` first, then package. Override `directories.output` to `release/` to avoid colliding with esbuild's `dist/`.
 - electron-updater is a **runtime dependency** (else pruned from the asar) and must be added to esbuild's `external[]`; the updater is guarded by `app.isPackaged`.
 - Auto-update is only fully verifiable across TWO sequential published releases — the two-release test is the Phase 8 acceptance gate, not a Phase 7 checkbox.
+- [Phase ?]: Phase 6 icon: single 256x256 32bpp entry via zero-dep node:fs writer (scripts/make-icon.mjs); avoids png-to-ico/sharp supply-chain surface (T-06-01).
 
 ### Pending Todos
 
@@ -85,10 +86,11 @@ Items acknowledged and carried forward:
 | Distribution | macOS/Linux packaging, code signing (DIST-01/02/03) | Deferred to v2 | v1.1 start |
 | Update UX | In-app update UI, release notes, manual check, restart-now (UPDUX-01..04) | Deferred to v1.x/v2 | v1.1 start |
 | Editing | Human-readable names (NAME-01), bulk edits (BULK-01/02), timestamped output + load-time round-trip check (OUT-01/02), header/character editing (HEADER-01) | Deferred beyond v1.1 | v1.0 close |
+| Phase 6 P01 | 4min | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-07-09T16:17:30.185Z
+Last session: 2026-07-09T16:34:14.630Z
 Stopped at: Phase 6 planned — 3 plans, ready to execute
 Resume file: .planning/phases/06-packaging-local-windows-nsis-installer/06-01-PLAN.md
 

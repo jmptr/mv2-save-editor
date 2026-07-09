@@ -13,7 +13,7 @@ Requirements for the Packaging & Distribution milestone. Each maps to exactly on
 - [ ] **PKG-01**: Developer can build a Windows NSIS installer (`.exe`) locally from the existing esbuild output via a single npm script (electron-builder packages the built `dist/`; it does not rebuild the TypeScript)
 - [ ] **PKG-02**: The installed app launches and runs the full load → browse/search → edit → preview → write loop identically to the dev build (the packaged asar resolves `preload.js` and `index.html` correctly)
 - [ ] **PKG-03**: The installer creates a Start Menu shortcut and a working uninstaller, and installs per-user without requiring admin elevation (`oneClick: true`, `perMachine: false`)
-- [ ] **PKG-04**: The app ships with a proper application icon (`.ico`), an `appId`, and a product name, and electron-builder output goes to `release/` (not the esbuild-owned `dist/`)
+- [x] **PKG-04**: The app ships with a proper application icon (`.ico`), an `appId`, and a product name, and electron-builder output goes to `release/` (not the esbuild-owned `dist/`)
 
 ### Auto-Update (UPD)
 
@@ -66,7 +66,7 @@ Which phases cover which requirements. Phase assignments populated during roadma
 | PKG-01 | Phase 6 | Pending |
 | PKG-02 | Phase 6 | Pending |
 | PKG-03 | Phase 6 | Pending |
-| PKG-04 | Phase 6 | Pending |
+| PKG-04 | Phase 6 | Complete |
 | UPD-01 | Phase 7 | Pending |
 | UPD-02 | Phase 7 | Pending |
 | UPD-03 | Phase 7 | Pending |
@@ -75,6 +75,7 @@ Which phases cover which requirements. Phase assignments populated during roadma
 | CI-03 | Phase 8 | Pending |
 
 **Coverage:**
+
 - v1.1 requirements: 10 total
 - Mapped to phases: 10 ✓ (Phase 6: PKG-01..04 · Phase 7: UPD-01..03 · Phase 8: CI-01..03)
 - Unmapped: 0

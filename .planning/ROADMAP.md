@@ -47,10 +47,10 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
   3. Installing runs per-user with no admin/UAC prompt (`oneClick: true`, `perMachine: false`), creates a Start Menu shortcut, and provides a working uninstaller.
   4. The installed app shows its own application `.ico` icon and carries a set `appId` and product name.
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 **Wave 1**
 
-  - [ ] 06-01-PLAN.md — Placeholder application icon: zero-dep `.ico` generator + committed `build/icon.ico` + icon-validity test (PKG-04)
+  - [x] 06-01-PLAN.md — Placeholder application icon: zero-dep `.ico` generator + committed `build/icon.ico` + icon-validity test (PKG-04)
   - [ ] 06-02-PLAN.md — electron-builder config + identity + version bump + `package` script + config/dist-layout tests (PKG-01/02/03/04, automatable slice)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -97,6 +97,6 @@ Phases execute in numeric order: 6 → 7 → 8
 | 3. Patcher + Validation + XP Table | v1.0 | 2/2 | Complete | 2026-07-04 |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | v1.0 | 5/5 | Complete | 2026-07-04 |
 | 5. Renderer UI — Browse, Search, Edit, Preview | v1.0 | 8/8 | Complete | 2026-07-05 |
-| 6. Packaging — Local Windows NSIS Installer | v1.1 | 0/3 | Not started | - |
+| 6. Packaging — Local Windows NSIS Installer | v1.1 | 1/3 | In Progress|  |
 | 7. Auto-Update from GitHub Releases | v1.1 | 0/TBD | Not started | - |
 | 8. Release CI — Publish-on-Tag + Two-Release Validation | v1.1 | 0/TBD | Not started | - |
