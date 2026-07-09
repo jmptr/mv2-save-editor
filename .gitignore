@@ -83,6 +83,9 @@ out
 dist
 .output
 
+# electron-builder packaged installers (release/ is not covered by the bare `dist` ignore)
+release/
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
