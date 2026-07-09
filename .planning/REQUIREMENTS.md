@@ -63,22 +63,22 @@ Which phases cover which requirements. Phase assignments populated during roadma
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PKG-01 | TBD | Pending |
-| PKG-02 | TBD | Pending |
-| PKG-03 | TBD | Pending |
-| PKG-04 | TBD | Pending |
-| UPD-01 | TBD | Pending |
-| UPD-02 | TBD | Pending |
-| UPD-03 | TBD | Pending |
-| CI-01 | TBD | Pending |
-| CI-02 | TBD | Pending |
-| CI-03 | TBD | Pending |
+| PKG-01 | Phase 6 | Pending |
+| PKG-02 | Phase 6 | Pending |
+| PKG-03 | Phase 6 | Pending |
+| PKG-04 | Phase 6 | Pending |
+| UPD-01 | Phase 7 | Pending |
+| UPD-02 | Phase 7 | Pending |
+| UPD-03 | Phase 7 | Pending |
+| CI-01 | Phase 8 | Pending |
+| CI-02 | Phase 8 | Pending |
+| CI-03 | Phase 8 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 10 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 10 ⚠️ (resolved by roadmapper)
+- Mapped to phases: 10 ✓ (Phase 6: PKG-01..04 · Phase 7: UPD-01..03 · Phase 8: CI-01..03)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-07-09 after v1.1 milestone questioning + packaging research*
-*Last updated: 2026-07-09 after initial definition*
+*Last updated: 2026-07-09 after roadmap creation — all 10 requirements mapped to Phases 6-8*
