@@ -4,15 +4,15 @@ milestone: v1.1
 milestone_name: Packaging & Distribution
 current_phase: 6
 current_phase_name: Packaging — Local Windows NSIS Installer
-status: planning
-stopped_at: Phase 6 context gathered
-last_updated: "2026-07-09T15:29:34.124Z"
+status: planned
+stopped_at: Phase 6 planned — 3 plans, ready to execute
+last_updated: "2026-07-09T16:17:30.185Z"
 last_activity: 2026-07-09
-last_activity_desc: v1.1 roadmap created (3 phases 6-8, all 10 requirements mapped)
+last_activity_desc: Phase 6 planned — 3 plans (icon, config wiring, manual Windows gate), verification passed
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
+  total_plans: 3
   completed_plans: 0
   percent: 0
 ---
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-07-09)
 ## Current Position
 
 Phase: 6 of 8 (Packaging — Local Windows NSIS Installer)
-Plan: — (not yet planned)
-Status: Roadmap complete — ready to plan Phase 6
-Last activity: 2026-07-09 — v1.1 roadmap created (3 phases 6-8, all 10 requirements mapped)
+Plan: 3 plans (06-01 icon · 06-02 config wiring · 06-03 manual Windows gate)
+Status: Phase 6 planned — verification passed, ready to execute
+Last activity: 2026-07-09 — Phase 6 planned (3 plans, 2 waves); research + pattern map + validation strategy complete
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -39,7 +39,7 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase | Requirements | Depends on | Status |
 |-------|--------------|------------|--------|
-| 6. Packaging — Local Windows NSIS Installer | PKG-01..04 | Phase 5 (v1.0 dist/) | Not started |
+| 6. Packaging — Local Windows NSIS Installer | PKG-01..04 | Phase 5 (v1.0 dist/) | Planned (3 plans) |
 | 7. Auto-Update from GitHub Releases | UPD-01..03 | Phase 6 | Not started |
 | 8. Release CI — Publish-on-Tag + Two-Release Validation | CI-01..03 | Phase 7 | Not started |
 
@@ -88,10 +88,10 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-07-09T15:29:34.103Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-packaging-local-windows-nsis-installer/06-CONTEXT.md
+Last session: 2026-07-09T16:17:30.185Z
+Stopped at: Phase 6 planned — 3 plans, ready to execute
+Resume file: .planning/phases/06-packaging-local-windows-nsis-installer/06-01-PLAN.md
 
 ## Operator Next Steps
 
-- Plan the first phase with `/gsd-plan-phase 6`.
+- Execute the phase with `/gsd-execute-phase 6` (Wave 1: 06-01 ∥ 06-02; Wave 2: 06-03 manual Windows gate).
