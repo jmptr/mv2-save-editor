@@ -1,306 +1,392 @@
 # Architecture Research
 
-**Domain:** Local desktop binary save-file editor (Electron + TypeScript) for Melvor Idle 2 `.sav` files
-**Researched:** 2026-07-03
+**Domain:** Electron desktop-app packaging, self-update, and CI publishing — integrated into an existing esbuild-built Electron 43 app (MV2 Save Editor)
+**Researched:** 2026-07-09
 **Confidence:** HIGH
+
+> Integration research for milestone **v1.1 Packaging & Distribution**. Fixed decisions (do not revisit): Windows-only NSIS, electron-updater from GitHub Releases, GitHub Actions publish-on-tag, **unsigned**. This maps the NEW packaging/update/CI pieces onto the *already-built* esbuild + `electron/main.ts` structure. It does **not** redesign the v1.0 app (see git history for the v1.0 core/main/renderer architecture).
+
+---
 
 ## Standard Architecture
 
-The dominant, well-supported pattern for this class of tool is a **three-layer split**:
-
-1. A **pure format core** (no Electron, no `fs`, no DOM) that owns all binary knowledge.
-2. A **trusted host** (Electron main process) that owns file I/O, Brotli, and hosts the core.
-3. An **untrusted UI** (Electron renderer) that only renders a serialized view model and emits edit intents.
-
-The single most important architectural rule: **raw bytes and byte offsets never leave the main process.** The renderer only ever sees JSON-safe view models and sends back `{fieldId, newValue}` intents. This is both a security boundary (Electron best practice: only main touches the filesystem) and the mechanism that structurally enforces the project's hard-won lesson — *offsets are re-parsed fresh on every load and never reused or persisted*.
-
-### System Overview
+### System Overview — the four seams v1.1 adds
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│  RENDERER (untrusted, sandboxed) — UI only, no Node, no bytes      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │
-│  │ Summary  │  │  Bank    │  │  Skills  │  │ Preview / Confirm │   │
-│  │  view    │  │  browser │  │  browser │  │     dialog        │   │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └─────────┬────────┘   │
-│       └─────────────┴──────┬──────┴──────────────────┘            │
-│              View model (JSON) ▲        ▼ edit intents {id,value}  │
-├───────────────────────────────╫═════════╫═════════════════════════┤
-│           PRELOAD  ── contextBridge: narrow, one method per channel │
-│      loadSave() · getModel() · previewEdits() · writeSave()         │
-├───────────────────────────────╫═════════╫═════════════════════════┤
-│  MAIN (trusted) — ipcMain.handle handlers + validation gate        │
-│  ┌────────────┐  ┌───────────────┐  ┌───────────────────────────┐ │
-│  │  File I/O  │  │ Brotli codec  │  │  Session store            │ │
-│  │  open/save │  │ (zlib native) │  │  buffer + FieldTable      │ │
-│  └─────┬──────┘  └───────┬───────┘  └────────────┬──────────────┘ │
-│        └─────────────────┴───────── hosts ───────┘                │
-├────────────────────────────────────────────────────────────────────┤
-│  FORMAT CORE (pure TS — zero Electron/Node/DOM deps, unit-tested)   │
-│  ┌─────────────┐ ┌────────────┐ ┌──────────┐ ┌──────────────────┐ │
-│  │ BinaryReader│ │  Parser    │ │  Model    │ │  Validation      │ │
-│  │ /Writer     │ │ header +   │ │ FieldTable│ │  value + struct  │ │
-│  │ LE prims    │ │ entities   │ │ + patcher │ │  round-trip      │ │
-│  └─────────────┘ └────────────┘ └──────────┘ └──────────────────┘ │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  DEVELOPER MACHINE / CI RUNNER (windows-latest)                       │
+│                                                                       │
+│   [1] BUILD (existing, unchanged mechanism)                           │
+│   npm run build:electron → node scripts/build.mjs                     │
+│        esbuild → dist/{main.js, preload.js, renderer.js,              │
+│                        renderer.css, *.map} + copy index.html         │
+│                        │                                              │
+│                        ▼  (dist/ is the INPUT to packaging)           │
+│   [2] PACKAGE (NEW)                                                   │
+│   electron-builder --win nsis                                         │
+│        reads config (electron-builder.yml OR package.json "build")   │
+│        files: dist/** + package.json + prod node_modules             │
+│        → app.asar (dist/ + package.json + electron-updater)          │
+│        → NSIS installer  release/MV2 Save Editor Setup X.Y.Z.exe     │
+│        → release/latest.yml   (update feed manifest)                 │
+│        → release/*.exe.blockmap (differential-download map)          │
+│        → BAKES app-update.yml INTO the asar from publish config      │
+│                        │                                              │
+│                        ▼  (only when --publish)                      │
+│   [3] PUBLISH (NEW, CI only)                                         │
+│   electron-builder --publish always  (GH_TOKEN)                     │
+│        uploads .exe + latest.yml + .blockmap ────────────┐          │
+└───────────────────────────────────────────────────────────┼─────────┘
+                                                             ▼
+                             ┌─────────────────────────────────────────┐
+                             │  GITHUB RELEASE  (tag vX.Y.Z)           │
+                             │   • MV2 Save Editor Setup X.Y.Z.exe     │
+                             │   • latest.yml   ◄── the update feed    │
+                             │   • *.exe.blockmap                      │
+                             └─────────────────────────────────────────┘
+                                                             ▲
+                                                             │ HTTPS poll on launch
+┌────────────────────────────────────────────────────────────┼─────────┐
+│  USER MACHINE (installed app)                               │         │
+│   [4] SELF-UPDATE (NEW)                                     │         │
+│   electron/main.ts → autoUpdater (electron-updater)         │         │
+│        app.whenReady → checkForUpdatesAndNotify() ──────────┘         │
+│        reads bundled app-update.yml → provider=github, owner/repo    │
+│        compares installed version vs latest.yml → download → notify  │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| **BinaryReader/Writer** | LE primitives: int32, int64 (BigInt), double, bool, 7-bit-length UTF-8 string; cursor tracking | Pure class over `Buffer`/`DataView`; `readInt32LE`, `read7BitEncodedInt`, symmetric writers |
-| **Parser** | Walk `[version][SaveHeader][entity list][…]`; locate Bank/skill entities; extract editable **Fields** with fresh offsets | Sequential decoder; produces `FieldTable` + section tree |
-| **Model (FieldTable + view builder)** | Map every editable value to `{id, kind, offset, width, value}`; build the renderer view model (summary/bank/skills) | `Map<FieldId, FieldDescriptor>` (main-only) + derived JSON tree |
-| **Patcher** | Apply same-width edits at `field.offset` onto a **copy** of the buffer | `struct.pack_into`-equivalent writes; refuses width changes |
-| **Validation** | (a) value: type/range/XP-table consistency; (b) structural: re-parse patched buffer, assert byte length unchanged | Pure validators shared by renderer (feedback) + main (gate) |
-| **Main / IPC host** | `open` → decompress → parse → cache session; serve view model; preview + write | `ipcMain.handle` handlers; owns `zlib` + `fs` |
-| **Preload bridge** | Expose ~4 narrow methods; serialize to plain types | `contextBridge.exposeInMainWorld` |
-| **Renderer** | Render view model, capture edits, show preview, trigger write | React/Svelte/vanilla; holds *no* offsets/bytes |
+| Component | Responsibility | Implementation |
+|-----------|----------------|----------------|
+| `scripts/build.mjs` (existing, **1 line MODIFIED**) | Compile app source → `dist/`. Must run **before** packaging. Add `electron-updater` to esbuild `external` so it loads from `node_modules`, not the bundle. | esbuild, unchanged mechanism |
+| electron-builder config (**NEW**) | Declares appId, product name, NSIS target, `directories.output`, `files` globs, and the `publish` provider (github/jmptr/mv2-save-editor). | `electron-builder.yml` (recommended) or `package.json` `"build"` key |
+| Updater module (**NEW**) | Wires `autoUpdater` in the main process: guard on `app.isPackaged`, call after `whenReady`, wire events + native dialogs. | `electron/updater.ts`, imported by `electron/main.ts` |
+| `electron/main.ts` (existing, **MODIFIED**) | Add one `initAutoUpdater()` call inside the existing `app.whenReady().then(...)` block. Nothing else changes. | 2–3 line diff |
+| `app-update.yml` (**generated, not authored**) | Runtime update feed config read by electron-updater. electron-builder generates it from the `publish` block and bakes it into `resources/`. | Do NOT hand-write |
+| `.github/workflows/release.yml` (**NEW**) | On `push` tag `v*`: checkout → setup-node → `npm ci` → `build:electron` → `electron-builder --publish always`. | Single `windows-latest` job |
+| `build/icon.ico` (**NEW**) | NSIS installer + app icon. electron-builder auto-discovers `build/icon.ico`. | 256×256 multi-res `.ico` |
+
+---
 
 ## Recommended Project Structure
 
 ```
-src/
-├── core/                     # PURE TS — no electron/fs/dom imports (the crown jewel)
-│   ├── binary/
-│   │   ├── reader.ts         # BinaryReader: LE prims + 7-bit string
-│   │   ├── writer.ts         # BinaryWriter: symmetric same-width writes
-│   │   └── primitives.test.ts
-│   ├── format/
-│   │   ├── header.ts         # SaveHeader parse (+ offset of entity list)
-│   │   ├── entities.ts       # entity-list walk → {id, start, size}
-│   │   ├── bank.ts           # item-stack extraction (qty/placeholder/locked/id)
-│   │   ├── skills.ts         # ExperienceComponent (XP double / cap / level)
-│   │   ├── wallet.ts         # GP/SlayerCoins int64 in Bank wallet
-│   │   └── *.test.ts         # golden-file round-trip fixtures
-│   ├── model/
-│   │   ├── field.ts          # FieldDescriptor {id, kind, offset, width, value}
-│   │   ├── field-table.ts    # Map<FieldId, FieldDescriptor> (offsets live ONLY here)
-│   │   ├── view-model.ts     # JSON-safe tree derived for the renderer
-│   │   └── patcher.ts        # apply {id,newValue} → same-width writes on a copy
-│   ├── validation/
-│   │   ├── value-rules.ts    # type/range + XP↔level consistency
-│   │   └── structural.ts     # re-parse patched buffer, length-invariant check
-│   └── xp-table.ts           # StandardExperienceTable (scaling/exp/base)
-├── main/                     # Electron main — trusted; the only place bytes exist
-│   ├── main.ts               # app lifecycle, BrowserWindow, webPreferences
-│   ├── session.ts            # per-file: {buffer, fieldTable, sourcePath}
-│   ├── codec.ts              # zlib.brotli{De,C}ompressSync wrappers
-│   ├── fs-io.ts              # read original / write NEW file (never overwrite)
-│   └── ipc-handlers.ts       # ipcMain.handle: load/getModel/preview/write + validate sender+args
-├── preload/
-│   └── preload.ts            # contextBridge: loadSave/getModel/previewEdits/writeSave
-├── renderer/                 # Electron renderer — untrusted, sandboxed, UI only
-│   ├── App.tsx
-│   ├── views/ (Summary, BankBrowser, SkillBrowser, PreviewDialog)
-│   ├── state/ (view model + pendingEdits map, keyed by fieldId)
-│   └── shared-types.ts       # DTO types shared with core view-model (no offsets)
-└── shared/
-    └── ipc-contract.ts       # channel names + request/response DTO types
+mv2-save-editor/
+├── electron/
+│   ├── main.ts            # MODIFIED: call initAutoUpdater() in whenReady
+│   ├── preload.ts         # UNCHANGED for v1 (updater stays main-only)
+│   ├── updater.ts         # NEW: autoUpdater wiring + native dialogs
+│   ├── renderer.tsx       # UNCHANGED
+│   ├── index.html         # UNCHANGED
+│   └── ui/                # UNCHANGED
+├── scripts/
+│   └── build.mjs          # MODIFIED: add 'electron-updater' to external[]
+├── build/
+│   └── icon.ico           # NEW: installer/app icon (buildResources dir)
+├── .github/workflows/
+│   └── release.yml        # NEW: publish-on-tag CI
+├── electron-builder.yml   # NEW: packaging + publish config
+├── dist/                  # esbuild output (git-ignored) — INPUT to packaging
+├── release/               # NEW electron-builder output dir (git-ignored)
+└── package.json           # MODIFIED: version, deps, scripts
 ```
 
 ### Structure Rationale
 
-- **`core/` has zero Electron/Node-host imports** so the entire binary engine runs under `vitest` in milliseconds, with golden-file fixtures asserting byte-exact round-trips. This is the highest-leverage boundary in the whole project: correctness of the save format is the product, and it must be testable without launching Electron.
-- **`main/` is the only layer that holds a `Buffer` or an offset.** File I/O, Brotli, and the authoritative `FieldTable` live here. This satisfies Electron's rule that only the trusted process touches the filesystem, and it makes "never reuse offsets across sessions" a structural fact — the renderer physically cannot cache an offset it never receives.
-- **`shared/ipc-contract.ts`** is the single source of truth for what crosses the boundary; both main and renderer import it so the DTO shape stays honest.
+- **`electron-builder.yml` over `package.json "build"`:** A dedicated YAML file keeps ~30 lines of packaging config out of the already-busy `package.json`, allows comments, and avoids merge noise on the manifest that also carries `main`/`scripts`/`deps`. Both are functionally equivalent; electron-builder reads either. Chosen for clarity. (If you prefer one-file simplicity, the `"build"` key works identically — pick exactly one; a `"build"` key in package.json would *override* the yml.)
+- **`electron/updater.ts` separate from `main.ts`:** `main.ts` is the security-critical IPC trust boundary (documented mitigations T-4-01/07/11). Keeping updater logic in its own module preserves that file's focus; `main.ts` gains only a single import + call.
+- **`release/` as the electron-builder output dir (NOT `dist/`):** **Critical integration point.** electron-builder's *default* `directories.output` is `dist/` — the exact folder the esbuild build already owns. Leaving the default makes electron-builder and esbuild fight over `dist/`. Override to `release/` so the stages have disjoint outputs: esbuild writes `dist/` (app code), electron-builder reads `dist/` and writes the installer to `release/`.
+
+---
 
 ## Architectural Patterns
 
-### Pattern 1: Field-Descriptor Offset Mapping (the core idea)
+### Pattern 1: Build-then-package, two disjoint output dirs
 
-**What:** Parsing produces a flat `FieldTable: Map<FieldId, FieldDescriptor>` where each descriptor is `{ id, kind: 'int32'|'int64'|'double'|'bool', offset, width, value }`. Edits are expressed purely as `{ fieldId, newValue }`. The patcher looks up the descriptor and writes `newValue` at `offset` with the fixed `width`. The renderer never sees `offset` — it only sees the id, a label, the current value, and validation constraints.
+**What:** The esbuild build (`dist/`) is a hard prerequisite of packaging. electron-builder does **not** compile TypeScript — it only copies already-built files into an asar and wraps them in an installer. The npm script chains them: build first, package second.
 
-**When to use:** Any in-place, same-width binary editor. It cleanly decouples "what the user edits" from "where the bytes are."
+**When to use:** Any Electron app with a custom (non-electron-builder) bundler. Exactly our case (hand-rolled esbuild; no electron-vite/Forge integration).
 
-**Trade-offs:** Excellent testability and a rock-solid non-destructive story; the FieldTable must be rebuilt on every load (feature, not cost — it's exactly the anti-stale-offset lesson).
+**Trade-offs:** You own the ordering (a stale `dist/` silently ships old code). Mitigate by always running `build:electron` immediately before `electron-builder` in the same script and in CI.
 
 **Example:**
-```typescript
-interface FieldDescriptor {
-  id: string;            // e.g. "bank.item.MelvorBase:AgilityMark.qty"
-  kind: 'int32' | 'int64' | 'double' | 'bool';
-  offset: number;        // fresh, main-process-only, never serialized
-  width: number;         // 4 | 8 | 1  — edits must not change this
-  value: number | bigint | boolean;
-}
-
-function applyEdit(buf: Buffer, f: FieldDescriptor, next: number | bigint) {
-  switch (f.kind) {
-    case 'int32':  buf.writeInt32LE(Number(next), f.offset); break;
-    case 'int64':  buf.writeBigInt64LE(BigInt(next), f.offset); break;
-    case 'double': buf.writeDoubleLE(Number(next), f.offset); break;
-  } // width is fixed by kind → same-width guarantee holds by construction
-}
+```jsonc
+// package.json scripts (NEW/MODIFIED)
+"build:electron": "node scripts/build.mjs",            // existing, unchanged
+"package": "npm run build:electron && electron-builder --win nsis",                    // NEW: local unsigned build
+"publish": "npm run build:electron && electron-builder --win nsis --publish always"    // NEW: CI publish
 ```
 
-### Pattern 2: Bytes-Stay-Home IPC (view model out, intents in)
+### Pattern 2: `files` globs preserve the `dist/` layout; node_modules is automatic
 
-**What:** `ipcMain.handle('save:load', path)` decompresses + parses + caches the session, then returns only the JSON view model. The renderer sends `save:preview` / `save:write` with a `pendingEdits` array of `{fieldId, newValue}` (int64 as string). The main process re-resolves ids against its own FieldTable, re-validates, and only then patches a copy.
+**What:** electron-builder's `files` globs select the *app's own* files into the asar. Production `node_modules` are included **automatically** (electron-builder walks `dependencies` and prunes `devDependencies`). So `files` only needs the app payload; do NOT try to hand-list node_modules.
 
-**When to use:** Every Electron app handling privileged data. Aligns with the current default posture (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`) and "one narrow method per channel; never expose raw `ipcRenderer`."
+**When to use:** Always. The globs must reproduce the `dist/` structure exactly, because packaged `main.js` resolves `join(__dirname, 'preload.js')` and `join(__dirname, 'index.html')` — those siblings must exist under `app.asar/dist/`.
 
-**Trade-offs:** Requires defining DTOs and serializing BigInt as string; in return you get a hard security boundary and an offset-leak-proof design.
+**Trade-offs:** Over-broad globs bloat the asar with `src/`, `test/`, `.planning/`. Explicit include keeps it lean; `dist/**` naturally excludes those dirs since they aren't matched.
 
-**Example:**
-```typescript
-// preload.ts — tiny, no fs/child_process/eval
-contextBridge.exposeInMainWorld('saveApi', {
-  load:    (path: string)            => ipcRenderer.invoke('save:load', path),
-  preview: (edits: EditIntent[])     => ipcRenderer.invoke('save:preview', edits),
-  write:   (edits: EditIntent[], out:string) => ipcRenderer.invoke('save:write', edits, out),
+**Example (`electron-builder.yml`):**
+```yaml
+appId: com.jmptr.mv2saveeditor
+productName: MV2 Save Editor
+directories:
+  output: release            # NOT dist/ — avoids collision with esbuild output
+  buildResources: build      # electron-builder auto-finds build/icon.ico
+files:
+  - dist/**                  # main.js, preload.js, renderer.js, renderer.css, index.html, *.map
+  - package.json             # required: 'main' + version live here
+  # production node_modules (incl. electron-updater) are added AUTOMATICALLY
+  # src/, test/, .planning/, .github/ are not matched by dist/** so they never enter the asar
+win:
+  target: nsis
+  icon: build/icon.ico
+nsis:
+  oneClick: false            # allow install-dir choice; set true for a silent one-click installer
+  perMachine: false          # per-user install → no UAC elevation (fits unsigned/personal use)
+publish:
+  provider: github
+  owner: jmptr
+  repo: mv2-save-editor
+  # releaseType defaults to 'draft' — assets upload to a DRAFT release; publish manually
+```
+
+**Key dependency rule:** electron-builder auto-prunes `devDependencies`. Therefore **`electron-updater` MUST be a `dependency`**, not a `devDependency` — otherwise it is pruned out of the asar and the app crashes on `require('electron-updater')`. `electron-builder` itself stays a `devDependency`.
+
+### Pattern 3: External the updater, don't bundle it
+
+**What:** The esbuild build currently sets `external: ['electron']`. Add `'electron-updater'`. Then `main.js` keeps a plain `require('electron-updater')` that resolves from the packaged `node_modules` at runtime.
+
+**When to use:** For any Node package that (a) reads its own files at runtime (electron-updater loads `app-update.yml` relative to `process.resourcesPath`) or (b) has a large transitive tree. Bundling electron-updater into `main.js` is *possible* but fragile (its js-yaml/lodash deps, dynamic requires). Externalizing is the canonical path and pairs naturally with electron-builder's automatic node_modules inclusion.
+
+**Trade-offs:** Requires electron-updater present in `node_modules` at package time (guaranteed, since it is a `dependency`). Slightly larger asar than a tree-shaken bundle — irrelevant for a personal tool.
+
+**Example (`scripts/build.mjs`, MODIFIED — one line):**
+```js
+const common = {
+  bundle: true, platform: 'node', format: 'cjs', target: 'node22',
+  sourcemap: true,
+  external: ['electron', 'electron-updater'],   // <-- add electron-updater
+  outdir: 'dist',
+};
+```
+
+### Pattern 4: Main-only updater with native dialogs (no renderer surface for v1)
+
+**What:** Keep all update logic in the main process. Use Electron's native `dialog` for the "update available / restart to install" prompts — the same `dialog` module `main.ts` already imports. No new preload channels, no renderer UI, no `contextBridge` changes.
+
+**When to use:** v1.1 explicitly. The renderer's IPC surface is a hardened, deliberately narrow four-channel bridge (`save:*`). Adding update-UI channels would widen that boundary for little benefit on a single-user tool. Native dialogs are sufficient.
+
+**Trade-offs:** No in-app download progress bar. Acceptable — updates are small and infrequent. A renderer progress UI (via a new `update:*` IPC channel + preload method) is a clean v1.2 extension if desired.
+
+**Example (`electron/updater.ts`, NEW):**
+```ts
+import { app, dialog } from 'electron';
+import { autoUpdater } from 'electron-updater';
+
+export function initAutoUpdater(): void {
+  if (!app.isPackaged) return;         // never run against a missing app-update.yml in dev
+  autoUpdater.autoDownload = true;     // download in background
+  autoUpdater.on('update-downloaded', async () => {
+    const { response } = await dialog.showMessageBox({
+      type: 'info', buttons: ['Restart now', 'Later'], defaultId: 0,
+      message: 'An update has been downloaded. Restart to apply?',
+    });
+    if (response === 0) autoUpdater.quitAndInstall();
+  });
+  autoUpdater.on('error', () => { /* log; never crash the app on update failure */ });
+  void autoUpdater.checkForUpdatesAndNotify();
+}
+```
+```ts
+// electron/main.ts (MODIFIED) — inside the existing whenReady block
+import { initAutoUpdater } from './updater';
+app.whenReady().then(() => {
+  registerIpcHandlers();
+  createWindow();
+  initAutoUpdater();                   // <-- the only functional addition
+  app.on('activate', () => { /* unchanged */ });
 });
-// main validates sender + arg schema inside every handler before acting
 ```
 
-### Pattern 3: Non-Destructive Copy-Patch-Verify-Write
-
-**What:** The load path keeps the pristine decompressed buffer immutable in the session. Write path: `const out = Buffer.from(session.buffer)` → apply all patches → **re-parse `out` and assert it still parses and `out.length === session.buffer.length`** → `brotliCompressSync` → write to a **new** path. The original file is never opened for writing.
-
-**When to use:** Always, for this project. A corrupted save is the worst outcome; the round-trip re-parse is a cheap last-line-of-defense.
-
-**Trade-offs:** One extra parse per write (negligible for a personal tool) buys strong corruption protection.
+---
 
 ## Data Flow
 
-### Load → Edit → Validate → Preview → Write
+### Release / update artifact flow (tag → CI → release → self-update)
 
 ```
-[User: Open file]
-    │  renderer → preload.load(path)
-    ▼
-MAIN: fs.readFile → brotliDecompressSync → Parser.parse(buffer)
-    │  builds FieldTable (fresh offsets) + view model; caches session
-    ▼
-[view model JSON] ──────────────► RENDERER renders Summary/Bank/Skills
-    │
-[User edits a value] → value-rules validate inline (instant feedback in renderer)
-    │  edits accumulate as pendingEdits: Map<fieldId, newValue>
-    ▼
-[User: Preview] → preload.preview(edits)
-    ▼
-MAIN: resolve ids in FieldTable → value-validate → build diff summary
-    │  {field, label, oldValue, newValue}  (no offsets crossing the wire)
-    ▼
-[preview summary] ──────────────► RENDERER shows confirm dialog
-    │
-[User: Confirm write] → preload.write(edits, outPath)
-    ▼
-MAIN: clone buffer → patch (same-width) → RE-PARSE + length-invariant check
-    │  → brotliCompressSync → fs.writeFile(NEW path)   [original untouched]
-    ▼
-[success + output path] ────────► RENDERER shows confirmation
+Developer: bump package.json version X.Y.Z  →  commit  →  git tag vX.Y.Z  →  git push --tags
+      │  (tag MUST match package.json version; electron-builder does not auto-bump)
+      ▼
+GitHub Actions: on push tag 'v*'
+      checkout → setup-node@22 → npm ci → npm run build:electron
+                                        → electron-builder --win nsis --publish always
+      │  env GH_TOKEN = secrets.GITHUB_TOKEN ; permissions: contents: write
+      ▼
+electron-builder generates + uploads to a DRAFT GitHub Release:
+      • MV2 Save Editor Setup X.Y.Z.exe          (NSIS installer)
+      • latest.yml                                (version, sha512, path — the update feed)
+      • MV2 Save Editor Setup X.Y.Z.exe.blockmap  (differential-download map)
+      ▼
+Human: review the draft → click Publish release   (draft is invisible to updaters until this)
+      ▼
+Installed apps (on next launch): autoUpdater fetches latest.yml from the published release,
+      compares X.Y.Z > installed → downloads .exe (using .blockmap for delta) → verifies sha512
+      → 'update-downloaded' → native dialog → quitAndInstall()
 ```
 
-### State Management
+### Why draft-first (default) is the right timing for v1
+
+electron-builder's GitHub publisher creates a **draft** release by default, and **electron-updater ignores draft/pre-release** entries (it reads the latest *published* release). This gives a safe gate: CI attaches the artifacts, you sanity-check the installer, then publish to make it live to all clients atomically. Setting `releaseType: release` would auto-publish (faster, less safe) — keep the default draft for v1.1.
+
+### Version-source-of-truth flow
 
 ```
-Authoritative state (MAIN, per open file):   { sourcePath, buffer (immutable), fieldTable }
-Derived/UI state (RENDERER):                  { viewModel (readonly), pendingEdits: Map<fieldId,newValue> }
+package.json "version"  ──►  baked into app  ──►  compared by autoUpdater against latest.yml "version"
+        ▲                                                         ▲
+        └── same string as the git tag (minus the 'v') ──────────┘   (latest.yml comes from the release)
 ```
-The renderer's `pendingEdits` is the only mutable edit state; it is a set of *intents*, not byte mutations. Nothing in the renderer can corrupt the buffer because the renderer has no buffer.
+Mismatch between the tag and `package.json.version` is the most common self-update bug — the workflow can add a guard step that fails if `refs/tags/v$VERSION` ≠ `package.json` version.
 
-### Key Data Flows
+---
 
-1. **Load flow:** file → main decompress → parse → FieldTable + view model → renderer. Offsets stop at the FieldTable.
-2. **Edit flow:** renderer value-validates locally for UX, but main re-validates authoritatively before any write — the renderer's validation is advisory only.
-3. **Write flow:** intents → main resolves against its FieldTable → copy-patch-verify-recompress → new file.
+## CI Job Shape
 
-## Scaling Considerations
+Single job, `windows-latest` (NSIS must be built on Windows for an unsigned personal build; cross-building Windows installers from Linux is possible but adds Wine/mono friction — not worth it here).
 
-This is a single-user desktop tool; "scale" means save-file size and editable-field count, not users.
+```yaml
+# .github/workflows/release.yml (NEW)
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write            # required for electron-builder to create/upload the Release
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22    # matches Electron 43's bundled Node 22 line; satisfies electron-builder 26
+          cache: npm
+      - run: npm ci
+      - run: npm run build:electron        # esbuild → dist/  (MUST precede packaging)
+      - run: npx electron-builder --win nsis --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # electron-builder reads GH_TOKEN
+```
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| Typical save (< ~10 MB decompressed, hundreds of bank items) | Synchronous `brotli*Sync` + full parse on load is fine; virtualize long lists in the UI |
-| Large save / thousands of bank items | Virtualized/`windowed` list rendering; debounce search; keep parse synchronous but off the UI thread (it already is — it's in main) |
-| Very large / slow Brotli | Move `brotli*Sync` to a `worker_threads` worker in main so the app window stays responsive; stream progress over IPC |
+Notes:
+- `secrets.GITHUB_TOKEN` is auto-provided; no PAT needed for same-repo releases. It needs `contents: write`, granted via the job `permissions` block.
+- No signing secrets (unsigned v1.1). SmartScreen "unknown publisher" is accepted per milestone decision.
+- Node 22 on the runner is for *tooling* (esbuild, electron-builder); it need not byte-match Electron's internal Node, but 22 is the clean, compatible choice.
 
-### Scaling Priorities
-
-1. **First bottleneck:** rendering a huge bank/skill list — fix with UI virtualization + client-side search index; no core changes.
-2. **Second bottleneck:** Brotli (de)compression latency on big saves — offload to a worker thread in the main process; the pure core is already worker-safe (no Electron deps).
+---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Parsing bytes (or shipping the Buffer) in the renderer
+### Anti-Pattern 1: Letting electron-builder default its output to `dist/`
+**What people do:** Omit `directories.output`, so electron-builder writes into `dist/` — the folder esbuild owns.
+**Why it's wrong:** The two stages collide; installer artifacts mix with app bundles, and cleaning one wipes the other.
+**Do this instead:** Set `directories.output: release` and git-ignore `release/`.
 
-**What people do:** Enable `nodeIntegration`, read the file and run Brotli/parse in the renderer for convenience.
-**Why it's wrong:** Breaks Electron's security model, and it leaks offsets/buffers into the untrusted UI where they can be cached and reused — the exact stale-offset failure the project already learned to avoid.
-**Do this instead:** Keep `nodeIntegration:false`, `contextIsolation:true`, `sandbox:true`; do all bytes/Brotli/fs in main; send only a view model.
+### Anti-Pattern 2: electron-updater as a devDependency
+**What people do:** `npm i -D electron-updater` alongside electron-builder.
+**Why it's wrong:** electron-builder prunes devDependencies from the asar → runtime `Cannot find module 'electron-updater'` crash.
+**Do this instead:** electron-updater is a **runtime `dependency`**; only `electron-builder`, `electron`, esbuild, etc. are devDependencies.
 
-### Anti-Pattern 2: Persisting or reusing offsets across sessions
+### Anti-Pattern 3: Hand-writing `app-update.yml`
+**What people do:** Author an `app-update.yml` and copy it into the build.
+**Why it's wrong:** electron-builder generates it from the `publish` block and bakes it into `resources/`. A hand-written one drifts and gets overwritten.
+**Do this instead:** Configure `publish: { provider: github, owner, repo }`. Let electron-builder emit `app-update.yml`. Only add a `dev-app-update.yml` if you want to test updates in a non-packaged dev run.
 
-**What people do:** Cache the FieldTable/offsets from a previous load to "speed up" the next edit.
-**Why it's wrong:** Offsets are only valid for the exact buffer they were parsed from; reusing them silently corrupts a different (or re-saved) file.
-**Do this instead:** Rebuild the FieldTable from scratch on every load; never serialize `offset`. The bytes-stay-home IPC design makes this automatic.
+### Anti-Pattern 4: Running `autoUpdater` in dev / without `app.isPackaged`
+**What people do:** Call `checkForUpdatesAndNotify()` unconditionally.
+**Why it's wrong:** In an unpackaged run there is no `app-update.yml`; electron-updater throws.
+**Do this instead:** Guard with `if (!app.isPackaged) return;` (as in `updater.ts` above).
 
-### Anti-Pattern 3: Using JS `number` for int64 GP/currency
+### Anti-Pattern 5: Bundling electron-updater into main.js via esbuild
+**What people do:** Leave `electron-updater` out of `external`, so esbuild inlines it.
+**Why it's wrong:** Its transitive deps + runtime file reads (`app-update.yml` resolution) make bundling fragile.
+**Do this instead:** Add `electron-updater` to esbuild `external`; ship it in node_modules (auto-included by electron-builder).
 
-**What people do:** Read/write GP as a `number`.
-**Why it's wrong:** `number` loses integer precision above 2^53; GP is int64 (up to ~9.2 quintillion).
-**Do this instead:** Use `BigInt` (`readBigInt64LE`/`writeBigInt64LE`); serialize as a string across IPC (JSON has no BigInt).
-
-### Anti-Pattern 4: Coupling the format core to Electron
-
-**What people do:** Import `electron`/`fs` inside parser/model code.
-**Why it's wrong:** Makes the binary engine un-unit-testable and forces launching Electron to verify correctness — where all the real risk lives.
-**Do this instead:** `core/` imports nothing from Electron; test it with golden-file round-trip fixtures under `vitest`.
-
-### Anti-Pattern 5: Rewriting region-size prefixes for value edits
-
-**What people do:** Recompute/rewrite entity `[int32 size]` prefixes on every edit.
-**Why it's wrong:** For same-width edits the region size is unchanged; rewriting it adds risk for zero benefit. Width-changing edits (byte insertion) are explicitly out of scope for v1.
-**Do this instead:** Enforce same-width writes at the patcher (`width` fixed by `kind`); if an edit would change width, reject it. Add a structural length-invariant assertion before write.
-
-### Anti-Pattern 6: Overwriting the original file
-
-**What people do:** Write the recompressed bytes back to the source path.
-**Why it's wrong:** A single bug destroys the only good save.
-**Do this instead:** Always write to a new output path; treat the loaded buffer as immutable.
+---
 
 ## Integration Points
 
-### External Services
+### NEW vs MODIFIED files (authoritative list for planners)
+
+| File | Status | Change |
+|------|--------|--------|
+| `electron-builder.yml` | **NEW** | appId, productName, `directories.output: release`, `files` globs, `win.nsis` target, `win.icon`, `publish.github` (jmptr/mv2-save-editor) |
+| `electron/updater.ts` | **NEW** | `initAutoUpdater()` — `app.isPackaged` guard, event wiring, native `dialog` restart prompt |
+| `.github/workflows/release.yml` | **NEW** | `windows-latest`, tag-`v*` trigger, checkout→setup-node 22→`npm ci`→`build:electron`→`electron-builder --publish always`, `contents: write`, `GH_TOKEN` |
+| `build/icon.ico` | **NEW** | 256×256 multi-resolution installer/app icon |
+| `package.json` | **MODIFIED** | add `electron-updater` to `dependencies`; add `electron-builder` to `devDependencies`; add `package`/`publish` scripts; version bump per release; keep `main: dist/main.js` unchanged |
+| `scripts/build.mjs` | **MODIFIED** | add `'electron-updater'` to esbuild `external` array (one line) |
+| `electron/main.ts` | **MODIFIED** | import + call `initAutoUpdater()` inside existing `app.whenReady().then(...)` |
+| `.gitignore` | **MODIFIED** | add `release/` (confirm `dist/` already ignored — it is) |
+| `electron/preload.ts` | **UNCHANGED** | updater is main-only for v1; no new IPC surface |
+| `app-update.yml` | **GENERATED** | produced by electron-builder into the asar; never authored/committed |
+| `latest.yml`, `*.exe`, `*.blockmap` | **GENERATED** | build artifacts in `release/`; uploaded to the Release, not committed |
+
+### External services
 
 | Service | Integration Pattern | Notes |
 |---------|---------------------|-------|
-| Brotli codec | Node built-in `zlib.brotliDecompressSync` / `brotliCompressSync` in main | No external dependency; keep in `main/codec.ts`; consider worker_threads for large saves |
-| Filesystem | `fs` in main only, via native open/save dialogs (`dialog.showOpenDialog`/`showSaveDialog`) | Read source; write NEW file; never open source for writing |
+| GitHub Releases | `publish.provider: github` → electron-builder uploads via `GH_TOKEN`; electron-updater reads published-release `latest.yml` over HTTPS | Draft-by-default; publish manually to go live. Owner/repo `jmptr/mv2-save-editor`. |
+| GitHub Actions | `push` tag `v*` trigger; `secrets.GITHUB_TOKEN` + `permissions: contents: write` | Same-repo token; no PAT. Windows runner. |
 
-### Internal Boundaries
+### Internal boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| core ↔ main | Direct function calls (main imports core) | Core stays pure; main injects the `Buffer` |
-| main ↔ renderer | `ipcMain.handle` / `ipcRenderer.invoke` via preload `contextBridge` | JSON-safe DTOs only; validate sender + arg schema; one method per channel |
-| renderer views ↔ edit state | Local store (`pendingEdits` map keyed by fieldId) | Intents only; no bytes/offsets |
+| `build.mjs (dist/)` ↔ `electron-builder` | Filesystem handoff: esbuild writes `dist/`, electron-builder reads it. **Strict ordering.** | Never package a stale `dist/`; chain in one script/CI step. |
+| `main.ts` ↔ `updater.ts` | One import + one call in `whenReady` | Keeps the hardened IPC file otherwise untouched. |
+| `updater.ts` ↔ GitHub | electron-updater + bundled `app-update.yml` | No preload/renderer involvement for v1. |
 
-## Suggested Build Order
+---
 
-Dependencies flow inward-out; build and test the core before any Electron shell exists.
+## Suggested Build Order for Phases (dependency-respecting)
 
-1. **Binary primitives** (`core/binary`) — reader/writer for int32/int64/double/bool/7-bit string, with unit tests. *No UI, no Electron.*
-2. **Format parser** (`core/format/header` + `entities`) — version, SaveHeader, entity-list walk; verify against a real decompressed save fixture.
-3. **Field extraction** (`core/format/bank`, `skills`, `wallet`) — produce `FieldDescriptor`s with fresh offsets; golden-file round-trip test (parse → patch → re-parse equals expected).
-4. **Model + patcher + validation** (`core/model`, `core/validation`, `xp-table`) — FieldTable, view-model builder, same-width patcher, value + structural validators.
-5. **Main host** (`main/codec`, `fs-io`, `session`, `ipc-handlers`) — wire Brotli + fs + core; implement load/preview/write handlers with sender/arg validation.
-6. **Preload bridge** (`preload/preload.ts`) — narrow contextBridge API; `shared/ipc-contract.ts` DTOs.
-7. **Renderer UI** (`renderer/`) — Summary, Bank browser, Skill browser, inline validation, Preview/Confirm dialog, write trigger.
+Each layer is testable before the next depends on it:
 
-Rationale: steps 1–4 are the risk-bearing correctness work and are fully testable headless; steps 5–7 are comparatively standard Electron plumbing. A working, unit-tested core with a byte-exact round-trip is the milestone that de-risks everything downstream.
+1. **Phase A — Packaging config + local unsigned build.**
+   Add `electron-builder` (dev dep), create `electron-builder.yml` (with `directories.output: release`, `files`, NSIS, icon), add `build/icon.ico`, add the `package` script, ignore `release/`; `main.ts`/build mechanism unchanged. **Verify:** `npm run package` produces `release/…Setup X.Y.Z.exe` that installs and launches the existing v1.0 app (load→edit→write still works from the installed build). This proves the `dist/`→asar layout (preload/index.html sibling resolution) survives packaging — the highest-risk unknown. No updater, no CI yet.
+
+2. **Phase B — Auto-update wiring.**
+   Add `electron-updater` (runtime dep), mark it esbuild-external (`build.mjs`), create `electron/updater.ts`, call it from `main.ts`, add the `publish` block so `app-update.yml` is baked in. **Verify:** packaged app boots without updater errors; optionally use `dev-app-update.yml` or a throwaway pre-release to observe an update being detected/downloaded. Depends on A (needs a working package to embed the updater into).
+
+3. **Phase C — CI publish-on-tag.**
+   Add `.github/workflows/release.yml`. **Verify:** push a `vX.Y.Z` tag → workflow builds → draft Release appears with `.exe` + `latest.yml` + `.blockmap`. Publish the draft → confirm an already-installed Phase-B build self-updates to it end-to-end. Depends on A+B (CI just automates the same `build`→`package`→`publish` chain, and the update loop is only provable once real assets exist on a published Release).
+
+Ordering rationale: config→local build is the load-bearing risk (does the packaged asar find `preload.js`/`index.html`?); the updater can't be meaningfully tested until a package exists; CI is a thin automation wrapper over the now-proven local `build+package+publish` pipeline, and the full self-update round-trip is only observable with published GitHub assets.
+
+---
+
+## Version / Compatibility Notes
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| electron-builder | `26.15.x` (latest stable) | Recommend staying on **26.x**. v27 exists but is a breaking major (native-ESM config, Node ≥ 22.12) — no v1.1 benefit and adds ESM friction against this `type: "commonjs"` repo. |
+| electron-updater | `6.x` (latest 6.8.x) | Runtime `dependency`. Ships with electron-builder's ecosystem; NSIS auto-update supported out of the box. |
+| Electron | `43.0.0` (existing) | Bundles Node 22; `app.isPackaged`, native `dialog`, NSIS updater all supported. |
+| Node (CI runner) | `22` | Tooling runtime for esbuild + electron-builder 26. |
+
+---
 
 ## Sources
 
-- [Context Isolation | Electron](https://www.electronjs.org/docs/latest/tutorial/context-isolation) — HIGH
-- [Security | Electron](https://www.electronjs.org/docs/latest/tutorial/security) — HIGH
-- [Process Sandboxing | Electron](https://www.electronjs.org/docs/latest/tutorial/sandbox) — HIGH
-- [contextBridge | Electron](https://www.electronjs.org/docs/latest/api/context-bridge) — HIGH
-- [Electron Architecture — Process Model & IPC (emadibrahim.com)](https://www.emadibrahim.com/electron-guide/architecture) — MEDIUM
-- `docs/current-skill.md` (authoritative reverse-engineered save-format spec) — HIGH
-- `.planning/PROJECT.md` (project constraints and lessons learned) — HIGH
+- [electron-builder — Auto Update docs](https://www.electron.build/auto-update) — GitHub provider, `app-update.yml` generation, NSIS updater. HIGH
+- [electron-builder — releases / npm](https://www.npmjs.com/package/electron-builder) — latest stable 26.15.x; v27 breaking (ESM, Node ≥ 22.12). HIGH
+- [electron-updater (npm) + CHANGELOG](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/CHANGELOG.md) — 6.x; provider config, `checkForUpdatesAndNotify`, `app-update.yml` at `process.resourcesPath`. HIGH
+- [Electron — Updating Applications](https://www.electronjs.org/docs/latest/tutorial/updates) — `app.isPackaged` guard, whenReady wiring. HIGH
+- In-repo `scripts/build.mjs`, `electron/main.ts`, `electron/preload.ts`, `package.json`, `electron/index.html` — actual esbuild output layout (`dist/{main,preload,renderer}.js`, `renderer.css`, `index.html`), `join(__dirname, …)` sibling resolution, `type: "commonjs"`, `main: dist/main.js`, current `external: ['electron']`. HIGH (direct inspection)
 
 ---
-*Architecture research for: local desktop binary save-file editor (Electron + TypeScript)*
-*Researched: 2026-07-03*
+*Architecture research for: Electron packaging + self-update + CI publishing integrated with an existing esbuild Electron 43 app*
+*Researched: 2026-07-09*
