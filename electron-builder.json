@@ -8,7 +8,7 @@
   "files": ["dist/**", "package.json"],
   "win": {
     "target": "nsis",
-    "icon": "build/icon.ico"
+    "icon": "build/icon.png"
   },
   "nsis": {
     "oneClick": true,

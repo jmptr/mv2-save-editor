@@ -3,7 +3,7 @@
 // Covers the automatable slice of:
 //   PKG-01: default artifactName resolves to "MV2 Save Editor Setup 1.1.0.exe" (no custom template)
 //   PKG-03: NSIS installer flags (oneClick / perMachine:false / createStartMenuShortcut)
-//   PKG-04: appId, productName, directories.output=release, win.icon=build/icon.ico
+//   PKG-04: appId, productName, directories.output=release, win.icon=build/icon.png
 // plus the locked D-04 version bump (1.1.0), D-05 `package` script chain, and the
 // electron-builder ^26 devDependency pin. These values must never silently drift from the
 // acceptance bar, so they are asserted directly against the committed config.
@@ -28,7 +28,7 @@ test('electron-builder.json: NSIS installer flags (PKG-03)', () => {
 
 test('electron-builder.json: win target + icon and files glob (PKG-02/04)', () => {
   assert.equal(builderConfig.win.target, 'nsis');
-  assert.equal(builderConfig.win.icon, 'build/icon.ico');
+  assert.equal(builderConfig.win.icon, 'build/icon.png');
   assert.ok(
     builderConfig.files.includes('dist/**'),
     'files must include dist/** so preload.js + index.html stay siblings of main.js in app.asar',
