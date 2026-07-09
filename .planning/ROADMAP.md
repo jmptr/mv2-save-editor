@@ -44,7 +44,10 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
   2. The installed app launches and completes the full load → browse/search → edit → preview → write loop identically to the dev build, because the packaged asar resolves `preload.js` and `index.html` as siblings of `dist/main.js`.
   3. Installing runs per-user with no admin/UAC prompt (`oneClick: true`, `perMachine: false`), creates a Start Menu shortcut, and provides a working uninstaller.
   4. The installed app shows its own application `.ico` icon and carries a set `appId` and product name.
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 06-01-PLAN.md — Placeholder application icon: zero-dep `.ico` generator + committed `build/icon.ico` + icon-validity test (PKG-04)
+  - [ ] 06-02-PLAN.md — electron-builder config + identity + version bump + `package` script + config/dist-layout tests (PKG-01/02/03/04, automatable slice)
+  - [ ] 06-03-PLAN.md — Manual Windows install-and-run acceptance gate (PKG-01/02/03 runtime)
 
 ### Phase 7: Auto-Update from GitHub Releases
 **Goal**: A packaged app checks GitHub Releases on launch and self-updates in the background, while staying completely inert in dev/unpackaged runs.
@@ -80,6 +83,6 @@ Phases execute in numeric order: 6 → 7 → 8
 | 3. Patcher + Validation + XP Table | v1.0 | 2/2 | Complete | 2026-07-04 |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | v1.0 | 5/5 | Complete | 2026-07-04 |
 | 5. Renderer UI — Browse, Search, Edit, Preview | v1.0 | 8/8 | Complete | 2026-07-05 |
-| 6. Packaging — Local Windows NSIS Installer | v1.1 | 0/TBD | Not started | - |
+| 6. Packaging — Local Windows NSIS Installer | v1.1 | 0/3 | Not started | - |
 | 7. Auto-Update from GitHub Releases | v1.1 | 0/TBD | Not started | - |
 | 8. Release CI — Publish-on-Tag + Two-Release Validation | v1.1 | 0/TBD | Not started | - |
