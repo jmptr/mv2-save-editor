@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-current_phase: 0
-status: Awaiting next milestone
-stopped_at: v1.0 MVP shipped and archived (tag v1.0); awaiting /gsd-new-milestone
-last_updated: "2026-07-06T00:04:55.629Z"
-last_activity: 2026-07-06
-last_activity_desc: Milestone v1.0 completed and archived
+milestone: v1.1
+milestone_name: Packaging & Distribution
+status: planning
+last_updated: "2026-07-09T14:36:38.668Z"
+last_activity: 2026-07-09
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 23
-  completed_plans: 23
-  percent: 100
-current_phase_name: renderer-ui-browse-search-edit-preview
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -28,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-07-04)
 
 ## Current Position
 
-Phase: Milestone v1.0 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-06 — Milestone v1.0 completed and archived
+Status: Defining requirements
+Last activity: 2026-07-09 — Milestone v1.1 started
 
 ## Performance Metrics
 

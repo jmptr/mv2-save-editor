@@ -13,6 +13,19 @@ frequently to exercise game functionality.
 Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the
 editor must always produce a `.sav` the game can load without corruption.
 
+## Current Milestone: v1.1 Packaging & Distribution
+
+**Goal:** Produce a downloadable, self-updating Windows installer for the MV2 Save Editor, published
+automatically to GitHub Releases.
+
+**Target features:**
+- electron-builder packaging → Windows NSIS installer (`.exe`), consuming the existing esbuild output
+- electron-updater wired into the main process → app checks GitHub Releases on launch and self-updates
+- GitHub Actions workflow → builds on version-tag push and uploads the installer + `latest.yml` to the
+  GitHub Release automatically
+- Distribution metadata (appId, product name, icon, publish config pointing at `jmptr/mv2-save-editor`)
+- Shipped **unsigned** for v1.1 (SmartScreen "unknown publisher" prompts accepted)
+
 ## Requirements
 
 ### Validated (v1.0)
@@ -30,11 +43,13 @@ editor must always produce a `.sav` the game can load without corruption.
 - ✓ Validate edited values against type/range limits before writing (reject-never-clamp, all violations collected) — v1.0 (SAFE-01)
 - ✓ Preview/confirm a summary of pending changes before writing — v1.0 (SAFE-02)
 
-### Active
+### Active (v1.1 Packaging & Distribution)
 
-(None — v1.0 shipped the full MVP scope. Next milestone's requirements defined via `/gsd-new-milestone`.)
+- Package the app into a Windows NSIS installer via electron-builder — see `.planning/REQUIREMENTS.md` (PKG-*)
+- Self-update from GitHub Releases via electron-updater (UPD-*)
+- Build and publish installers automatically from GitHub Actions on version-tag push (CI-*)
 
-Candidate directions carried from the v1 requirements' v2 list (not yet committed): human-readable item/skill names (NAME-01), bulk edits (BULK-01/02), timestamped output + round-trip self-check on load (OUT-01/02), header/character editing (HEADER-01).
+Candidate directions still deferred from the v1 requirements' v2 list (not in this milestone): human-readable item/skill names (NAME-01), bulk edits (BULK-01/02), timestamped output + round-trip self-check on load (OUT-01/02), header/character editing (HEADER-01).
 
 ### Out of Scope
 
@@ -115,7 +130,12 @@ The complete load→browse/search→edit→preview→write loop works end-to-end
 
 ## Next Milestone Goals
 
-To be defined via `/gsd-new-milestone`. Leading candidates from the deferred v2 list: human-readable item/skill names (NAME-01), bulk edits (BULK-01/02), timestamped output + load-time round-trip self-check (OUT-01/02), header/character editing (HEADER-01).
+**Active:** v1.1 Packaging & Distribution — Windows NSIS installer via electron-builder, electron-updater
+self-update from GitHub Releases, and a GitHub Actions publish-on-tag workflow (unsigned for v1.1).
+
+Still deferred beyond v1.1 (from the v2 list): human-readable item/skill names (NAME-01), bulk edits
+(BULK-01/02), timestamped output + load-time round-trip self-check (OUT-01/02), header/character
+editing (HEADER-01). macOS/Linux packaging and code signing are also deferred.
 
 ---
-*Last updated: 2026-07-05 after v1.0 MVP milestone — full save-editor loop shipped and validated in-game (14/14 requirements); post-ship phantom-stack fix landed*
+*Last updated: 2026-07-09 — v1.1 Packaging & Distribution milestone started (Windows installer + auto-update + CI publish)*
