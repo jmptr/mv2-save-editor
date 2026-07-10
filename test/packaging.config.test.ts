@@ -42,6 +42,10 @@ test('package.json: version 1.1.0, package script chain, electron-builder devDep
   assert.ok(packageScript, 'package.json must define a `package` script');
   assert.match(packageScript, /build:electron/);
   assert.match(packageScript, /electron-builder/);
+  // Force the Windows NSIS target explicitly — without --win, electron-builder
+  // defaults to the HOST platform and silently builds Linux snap/AppImage when
+  // run from Linux/WSL2 instead of the intended MV2 Save Editor Setup .exe (PKG-01).
+  assert.match(packageScript, /--win/);
 
   assert.ok(
     pkg.devDependencies['electron-builder'],

@@ -20,8 +20,8 @@
     "typecheck:ui": "tsc --noEmit -p electron/ui/tsconfig.json",
     "build:electron": "node scripts/build.mjs",
     "start": "npm run build:electron && electron .",
-    "package": "npm run build:electron && electron-builder --config electron-builder.json",
-    "package:dir": "npm run build:electron && electron-builder --dir --config electron-builder.json"
+    "package": "npm run build:electron && electron-builder --win --config electron-builder.json",
+    "package:dir": "npm run build:electron && electron-builder --win --dir --config electron-builder.json"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",
