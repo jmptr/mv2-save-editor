@@ -69,10 +69,10 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
   3. In dev/unpackaged runs (`npm start` / `electron .`), the updater is inert — guarded by `app.isPackaged`, it never fires or throws.
   4. electron-updater ships as a runtime dependency that is physically present inside `app.asar` after packaging (not pruned) and is listed in esbuild's `external` array so it resolves from `node_modules`.
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 **Wave 1** *(parallel — no file overlap)*
 
-  - [ ] 07-01-PLAN.md — electron-updater dependency + esbuild `external` + `publish` block + packaging config test; supply-chain legitimacy gate (UPD-01/02, D-06/D-07, success criterion 4 static slice)
+  - [x] 07-01-PLAN.md — electron-updater dependency + esbuild `external` + `publish` block + packaging config test; supply-chain legitimacy gate (UPD-01/02, D-06/D-07, success criterion 4 static slice)
   - [ ] 07-02-PLAN.md — main-process updater seam: zero-dep fs logger + guarded `initAutoUpdater()` behind `app.isPackaged` + logger/seam tests (UPD-01/02/03, D-01..D-05/D-08)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -106,5 +106,5 @@ Phases execute in numeric order: 6 → 7 → 8
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | v1.0 | 5/5 | Complete | 2026-07-04 |
 | 5. Renderer UI — Browse, Search, Edit, Preview | v1.0 | 8/8 | Complete | 2026-07-05 |
 | 6. Packaging — Local Windows NSIS Installer | v1.1 | 3/3 | Complete    | 2026-07-18 |
-| 7. Auto-Update from GitHub Releases | v1.1 | 0/3 | Planned | - |
+| 7. Auto-Update from GitHub Releases | v1.1 | 1/3 | In Progress|  |
 | 8. Release CI — Publish-on-Tag + Two-Release Validation | v1.1 | 0/TBD | Not started | - |
