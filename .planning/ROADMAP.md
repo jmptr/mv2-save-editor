@@ -97,6 +97,6 @@ Phases execute in numeric order: 6 → 7 → 8
 | 3. Patcher + Validation + XP Table | v1.0 | 2/2 | Complete | 2026-07-04 |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | v1.0 | 5/5 | Complete | 2026-07-04 |
 | 5. Renderer UI — Browse, Search, Edit, Preview | v1.0 | 8/8 | Complete | 2026-07-05 |
-| 6. Packaging — Local Windows NSIS Installer | v1.1 | 3/3 | Complete   | 2026-07-18 |
+| 6. Packaging — Local Windows NSIS Installer | v1.1 | 3/3 | Complete    | 2026-07-18 |
 | 7. Auto-Update from GitHub Releases | v1.1 | 0/TBD | Not started | - |
 | 8. Release CI — Publish-on-Tag + Two-Release Validation | v1.1 | 0/TBD | Not started | - |
