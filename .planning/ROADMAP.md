@@ -69,7 +69,15 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
   3. In dev/unpackaged runs (`npm start` / `electron .`), the updater is inert — guarded by `app.isPackaged`, it never fires or throws.
   4. electron-updater ships as a runtime dependency that is physically present inside `app.asar` after packaging (not pruned) and is listed in esbuild's `external` array so it resolves from `node_modules`.
 
-**Plans**: TBD
+**Plans**: 3 plans
+**Wave 1** *(parallel — no file overlap)*
+
+  - [ ] 07-01-PLAN.md — electron-updater dependency + esbuild `external` + `publish` block + packaging config test; supply-chain legitimacy gate (UPD-01/02, D-06/D-07, success criterion 4 static slice)
+  - [ ] 07-02-PLAN.md — main-process updater seam: zero-dep fs logger + guarded `initAutoUpdater()` behind `app.isPackaged` + logger/seam tests (UPD-01/02/03, D-01..D-05/D-08)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+  - [ ] 07-03-PLAN.md — Manual Windows/CI packaged acceptance gate: electron-updater physically in `app.asar` + app runs + `updater.log` written (UPD-01/02/03 runtime)
 
 ### Phase 8: Release CI — Publish-on-Tag + Two-Release Validation
 
