@@ -43,9 +43,12 @@ automatically to GitHub Releases.
 - ✓ Validate edited values against type/range limits before writing (reject-never-clamp, all violations collected) — v1.0 (SAFE-01)
 - ✓ Preview/confirm a summary of pending changes before writing — v1.0 (SAFE-02)
 
+### Validated (v1.1)
+
+- ✓ Package the app into a Windows NSIS installer via electron-builder — per-user `.exe` produced (`MV2 Save Editor Setup 1.1.0.exe`), installed app runs the full editor loop — Phase 6 (PKG-01..04)
+
 ### Active (v1.1 Packaging & Distribution)
 
-- Package the app into a Windows NSIS installer via electron-builder — see `.planning/REQUIREMENTS.md` (PKG-*)
 - Self-update from GitHub Releases via electron-updater (UPD-*)
 - Build and publish installers automatically from GitHub Actions on version-tag push (CI-*)
 
@@ -128,6 +131,8 @@ The complete load→browse/search→edit→preview→write loop works end-to-end
 
 **Known post-ship work:** the phantom-stack bank-corruption bug (surfaced at v1.0 in-game acceptance) is fixed and confirmed (b4ac6c4). Blind spot: the Inventory tab-walk is only proven against 2-tab saves — 3+ tab saves would fail-loud (throw) rather than misparse, which is safe.
 
+**v1.1 progress:** Phase 6 (Packaging) complete (2026-07-18) — `npm run package` produces a per-user Windows NSIS installer (`MV2 Save Editor Setup 1.1.0.exe`) via electron-builder wrapping the existing `dist/`; the installed app runs the full editor loop, verified on native Windows. The icon source is a committed zero-dependency `build/icon.png` (electron-builder generates the Windows `.ico` from it — electron-builder 26.15 rejects `.ico` as a source). Next: Phase 7 (electron-updater self-update).
+
 ## Next Milestone Goals
 
 **Active:** v1.1 Packaging & Distribution — Windows NSIS installer via electron-builder, electron-updater
@@ -138,4 +143,4 @@ Still deferred beyond v1.1 (from the v2 list): human-readable item/skill names (
 editing (HEADER-01). macOS/Linux packaging and code signing are also deferred.
 
 ---
-*Last updated: 2026-07-09 — v1.1 Packaging & Distribution milestone started (Windows installer + auto-update + CI publish)*
+*Last updated: 2026-07-18 — Phase 6 (Windows NSIS packaging) complete; next: Phase 7 (electron-updater self-update)*
