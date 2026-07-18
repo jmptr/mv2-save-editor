@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Packaging & Distribution
-current_phase: 7
-status: completed
-stopped_at: Phase 7 planned (3 plans, ready to execute)
-last_updated: "2026-07-18T18:45:23.558Z"
+current_phase: 8
+current_phase_name: Release CI — Publish-on-Tag + Two-Release Validation
+status: planned
+stopped_at: Phase 8 planned (2 plans, ready to execute)
+last_updated: "2026-07-18T20:57:27.005Z"
 last_activity: 2026-07-18
-last_activity_desc: Phase 7 marked complete
+last_activity_desc: Phase 8 planning complete (2 plans, 2 waves)
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 6
   completed_plans: 6
   percent: 67
-current_phase_name: auto-update-from-github-releases
 ---
 
 # Project State
@@ -24,16 +24,16 @@ current_phase_name: auto-update-from-github-releases
 See: .planning/PROJECT.md (updated 2026-07-09)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** Phase 7 complete — next is Phase 8 (Release CI)
+**Current focus:** Phase 8 — Release CI (planned, ready to execute)
 
 ## Current Position
 
-Phase: 7 — COMPLETE (verification PASS, 4/4 success criteria)
-Plan: 3 of 3
-Status: Phase 7 complete; ready to plan Phase 8
-Last activity: 2026-07-18 — Phase 7 marked complete
+Phase: 8 — Release CI — Publish-on-Tag + Two-Release Validation
+Plan: 2 plans ready (2 waves)
+Status: Planned — ready to execute
+Last activity: 2026-07-18 — Phase 8 planning complete (2 plans)
 
-Progress (v1.1): [██████░░░░] 67% (2 of 3 phases)
+Progress (v1.1): [██████░░░░] 67% (2 of 3 phases; Phase 8 planned)
 
 ## Roadmap (v1.1)
 
@@ -41,7 +41,7 @@ Progress (v1.1): [██████░░░░] 67% (2 of 3 phases)
 |-------|--------------|------------|--------|
 | 6. Packaging — Local Windows NSIS Installer | PKG-01..04 | Phase 5 (v1.0 dist/) | ✅ Complete (3/3) |
 | 7. Auto-Update from GitHub Releases | UPD-01..03 | Phase 6 | ✅ Complete (3/3) |
-| 8. Release CI — Publish-on-Tag + Two-Release Validation | CI-01..03 | Phase 7 | Not started |
+| 8. Release CI — Publish-on-Tag + Two-Release Validation | CI-01..03 | Phase 7 | Planned (2 plans) |
 
 ## Performance Metrics
 
@@ -95,11 +95,12 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-07-18T18:45:23Z
-Stopped at: Phase 7 complete (3/3 plans, verification PASS 4/4) — pushed to claude/gsd-execute-phase-6-caly71
-Resume file: .planning/ROADMAP.md (Phase 8 details)
+Last session: 2026-07-18T20:57Z
+Stopped at: Phase 8 planned (2 plans, 2 waves; plan-checker PASS after 1 revision) — pushed to claude/gsd-execute-phase-6-caly71
+Resume file: .planning/phases/08-release-ci-publish-on-tag-two-release-validation/08-01-PLAN.md
 
 ## Operator Next Steps
 
-- Plan Phase 8 with `/gsd-plan-phase 8` (Release CI — publish-on-tag + two-release validation; this is where end-to-end auto-update apply is proven).
-- Note for Phase 8: electron-builder defaults to a draft release (decide draft-then-manual vs auto-publish); watch the esbuild `@esbuild/win32-x64` / `package-lock.json` / `allowScripts` interaction on `windows-latest` (most likely first-CI failure).
+- Execute the phase with `/gsd-execute-phase 8` (Wave 1: 08-01 release.yml + static workflow/lockfile test — automatable, any-OS; Wave 2: 08-02 two blocking human-verify gates — real tag→draft→publish→install + v1.1.0→v1.1.1 two-release self-update proof on Windows).
+- Working defaults recorded in the plans as explicit assumptions (no discuss-phase was run): draft-then-manual publish; direct `electron-builder --publish onTagOrDraft`; SC4 two-release proof as a manual Windows gate. Confirm/override at execute time.
+- Version=tag invariant: bumping `package.json.version` for a release is a lockstep edit with `test/packaging.config.test.ts` (both the version assertion AND the installer-name literal).
