@@ -5,10 +5,10 @@ milestone_name: Packaging & Distribution
 current_phase: 7
 current_phase_name: Auto-Update from GitHub Releases
 status: executing
-stopped_at: Phase 7 context gathered
+stopped_at: Phase 7 planned (3 plans, ready to execute)
 last_updated: "2026-07-18T11:54:11.930Z"
 last_activity: 2026-07-18
-last_activity_desc: Phase 6 complete, transitioned to Phase 7
+last_activity_desc: Phase 7 planning complete — 3 plans ready
 progress:
   total_phases: 3
   completed_phases: 1
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-09)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** Phase 6 — packaging-local-windows-nsis-installer
+**Current focus:** Phase 7 — Auto-Update from GitHub Releases
 
 ## Current Position
 
 Phase: 7 — Auto-Update from GitHub Releases
-Plan: Not started
+Plan: 3 plans ready (2 waves)
 Status: Ready to execute
-Last activity: 2026-07-18 — Phase 6 complete, transitioned to Phase 7
+Last activity: 2026-07-18 — Phase 7 planning complete (3 plans)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -40,7 +40,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase | Requirements | Depends on | Status |
 |-------|--------------|------------|--------|
 | 6. Packaging — Local Windows NSIS Installer | PKG-01..04 | Phase 5 (v1.0 dist/) | Planned (3 plans) |
-| 7. Auto-Update from GitHub Releases | UPD-01..03 | Phase 6 | Not started |
+| 7. Auto-Update from GitHub Releases | UPD-01..03 | Phase 6 | Planned (3 plans) |
 | 8. Release CI — Publish-on-Tag + Two-Release Validation | CI-01..03 | Phase 7 | Not started |
 
 ## Performance Metrics
@@ -93,9 +93,9 @@ Items acknowledged and carried forward:
 ## Session Continuity
 
 Last session: 2026-07-18T11:54:11.911Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-auto-update-from-github-releases/07-CONTEXT.md
+Stopped at: Phase 7 planned (3 plans, ready to execute)
+Resume file: .planning/phases/07-auto-update-from-github-releases/07-01-PLAN.md
 
 ## Operator Next Steps
 
-- Execute the phase with `/gsd-execute-phase 6` (Wave 1: 06-01 ∥ 06-02; Wave 2: 06-03 manual Windows gate).
+- Execute the phase with `/gsd-execute-phase 7` (Wave 1: 07-01 ∥ 07-02; Wave 2: 07-03 manual Windows gate).

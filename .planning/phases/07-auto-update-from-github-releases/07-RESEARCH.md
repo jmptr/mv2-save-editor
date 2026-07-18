@@ -399,14 +399,14 @@ public isUpdaterActive(): boolean {
 | A3 | No `asarUnpack` needed because electron-updater's whole dep tree is pure JS | Supporting / Anti-Patterns | Low — dep list verified (semver/js-yaml/fs-extra/lodash/tiny-typed-emitter — all pure JS); confirm by launching the packaged app |
 | A4 | The default notification wording is acceptable and shown by the one call | Code Examples / UPD-02 | Low — verified in source; wording is generic but D-01 accepts it |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Is end-to-end auto-update verifiable within Phase 7?**
+1. **Is end-to-end auto-update verifiable within Phase 7?** — **RESOLVED:** No, and by design — Phase 7's acceptance excludes the end-to-end proof (deferred to Phase 8's two-release gate).
    - What we know: the feed (`latest.yml` + assets) is produced by **Phase 8**; Phase 7 only consumes it.
    - What's unclear: nothing blocking — this is by design.
    - Recommendation: Phase 7's acceptance is (a) automated static checks (deps placement, external[], guard present, publish block) + (b) a manual packaged-launch check that the app runs normally and writes `updater.log` (a logged "no feed / 404" is expected and correct pre-Phase-8). The "an update actually downloads and installs" proof belongs to Phase 8's two-release validation.
 
-2. **Does producing `app.asar` to assert electron-updater is inside it require Windows/Wine?**
+2. **Does producing `app.asar` to assert electron-updater is inside it require Windows/Wine?** — **RESOLVED:** Run the asar-contents assertion on the Windows/CI build host; keep the Linux-host automated gate to static config assertions.
    - What we know (from Phase 6): the NSIS installer + rcedit stamping need Wine on Linux; asar packing itself is cross-platform, but `electron-builder --dir` for a Windows target still invokes rcedit.
    - Recommendation: run the "asar physically contains `node_modules/electron-updater`" assertion on the machine/CI that builds the package (developer's Windows box or Phase 8 `windows-latest`), via `npx asar list release/win-unpacked/resources/app.asar`. On the Linux dev host, keep the automated gate to static config assertions (deps/external/guard/publish).
 
