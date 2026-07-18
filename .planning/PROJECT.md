@@ -46,11 +46,11 @@ automatically to GitHub Releases.
 ### Validated (v1.1)
 
 - ✓ Package the app into a Windows NSIS installer via electron-builder — per-user `.exe` produced (`MV2 Save Editor Setup 1.1.0.exe`), installed app runs the full editor loop — Phase 6 (PKG-01..04)
+- ✓ Self-update from GitHub Releases via electron-updater — packaged app runs one guarded launch check (inert in dev via `app.isPackaged`); electron-updater ships unpruned inside `app.asar`, kept esbuild-`external` — Phase 7 (UPD-01..03)
 
 ### Active (v1.1 Packaging & Distribution)
 
-- Self-update from GitHub Releases via electron-updater (UPD-*)
-- Build and publish installers automatically from GitHub Actions on version-tag push (CI-*)
+- Build and publish installers automatically from GitHub Actions on version-tag push, proven by an end-to-end two-release self-update (CI-*)
 
 Candidate directions still deferred from the v1 requirements' v2 list (not in this milestone): human-readable item/skill names (NAME-01), bulk edits (BULK-01/02), timestamped output + round-trip self-check on load (OUT-01/02), header/character editing (HEADER-01).
 
@@ -105,6 +105,8 @@ Candidate directions still deferred from the v1 requirements' v2 list (not in th
 | Non-destructive write to new file + validate + preview | Corrupted saves are the worst failure; keep mistakes recoverable | ✓ Proven end-to-end — Phase 3 reject-before-write + Phase 4 new-file write (source byte-unchanged) + Phase 5 SAFE-02 confirm gate |
 | Lean Electron + TypeScript (research to confirm) | Native Brotli in Node + existing Node scaffold | ✓ Good — Electron 43 main process; `node:zlib` Brotli + `Buffer` LE, zero binary-format deps |
 | Bank Inventory: explicit tab-walk over loose marker-search | Marker-search leaked phantom stacks from the trailing "Chests" registry → editing one reverted the whole bank in-game | ✓ Good — post-v1.0 fix (b4ac6c4); structural walk makes phantoms impossible, confirmed in-game |
+| Updater seam kept dev-inert via lazy `require` behind `app.isPackaged` | A top-level import would load electron-updater in dev; the module must be unloadable when unpackaged (UPD-03) | ✓ Proven — Phase 7; `main.ts` lazy-requires `./updater` only inside the guard, `updater.ts` lazy-requires electron/electron-updater inside `initAutoUpdater()`; static-asserted + Windows runtime-confirmed |
+| electron-updater as a runtime `dependency` + esbuild `external` | devDeps are pruned from `app.asar`; bundling breaks its dynamic requires / `app-update.yml` path resolution | ✓ Proven — Phase 7; `npx asar list` confirmed it unpruned in the packaged asar, `dist/main.js` keeps one literal `require("electron-updater")` |
 
 ## Evolution
 
@@ -131,7 +133,7 @@ The complete load→browse/search→edit→preview→write loop works end-to-end
 
 **Known post-ship work:** the phantom-stack bank-corruption bug (surfaced at v1.0 in-game acceptance) is fixed and confirmed (b4ac6c4). Blind spot: the Inventory tab-walk is only proven against 2-tab saves — 3+ tab saves would fail-loud (throw) rather than misparse, which is safe.
 
-**v1.1 progress:** Phase 6 (Packaging) complete (2026-07-18) — `npm run package` produces a per-user Windows NSIS installer (`MV2 Save Editor Setup 1.1.0.exe`) via electron-builder wrapping the existing `dist/`; the installed app runs the full editor loop, verified on native Windows. The icon source is a committed zero-dependency `build/icon.png` (electron-builder generates the Windows `.ico` from it — electron-builder 26.15 rejects `.ico` as a source). Next: Phase 7 (electron-updater self-update).
+**v1.1 progress (2 of 3 phases, 2026-07-18):** Phase 6 (Packaging) complete — `npm run package` produces a per-user Windows NSIS installer (`MV2 Save Editor Setup 1.1.0.exe`) via electron-builder wrapping the existing `dist/`; the installed app runs the full editor loop, verified on native Windows. The icon source is a committed zero-dependency `build/icon.png` (electron-builder generates the Windows `.ico` from it — electron-builder 26.15 rejects `.ico` as a source). Phase 7 (Auto-Update) complete — a packaged app runs one guarded `checkForUpdatesAndNotify()` launch check behind `app.isPackaged` (fully inert in dev), with a zero-dep fs logger and a dual-channel error trap so an absent feed is swallowed and logged, never blocking the editor; electron-updater ships as an unpruned runtime dependency inside `app.asar`, kept esbuild-`external`. Verified PASS (4/4 success criteria; suite 292/292 green) including a native-Windows packaged acceptance gate. Next: Phase 8 (Release CI — publish-on-tag + the two-release end-to-end update proof).
 
 ## Next Milestone Goals
 
@@ -143,4 +145,4 @@ Still deferred beyond v1.1 (from the v2 list): human-readable item/skill names (
 editing (HEADER-01). macOS/Linux packaging and code signing are also deferred.
 
 ---
-*Last updated: 2026-07-18 — Phase 6 (Windows NSIS packaging) complete; next: Phase 7 (electron-updater self-update)*
+*Last updated: 2026-07-18 — Phase 7 (electron-updater self-update) complete; next: Phase 8 (Release CI — publish-on-tag + two-release validation)*
