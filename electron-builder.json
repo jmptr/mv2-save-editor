@@ -6,6 +6,7 @@
     "buildResources": "build"
   },
   "files": ["dist/**", "package.json"],
+  "publish": [{ "provider": "github", "owner": "jmptr", "repo": "mv2-save-editor" }],
   "win": {
     "target": "nsis",
     "icon": "build/icon.png"

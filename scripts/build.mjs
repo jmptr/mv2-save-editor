@@ -27,7 +27,10 @@ const common = {
   format: 'cjs',
   target: 'node22',
   sourcemap: true,
-  external: ['electron'],
+  // `electron` is the runtime host (never bundled). `electron-updater` stays external too: it does
+  // dynamic requires and resolves `app-update.yml` relative to `process.resourcesPath` at runtime,
+  // so bundling it would break those path lookups in the packaged app (RESEARCH Pitfall 4).
+  external: ['electron', 'electron-updater'],
   outdir: 'dist',
 };
 
