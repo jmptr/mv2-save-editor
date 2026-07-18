@@ -19,7 +19,7 @@ Requirements for the Packaging & Distribution milestone. Each maps to exactly on
 
 - [x] **UPD-01**: On launch, a packaged app checks the GitHub Releases feed and downloads a newer published version in the background
 - [x] **UPD-02**: A downloaded update is installed when the app quits, and the user sees an "update ready" notification beforehand
-- [ ] **UPD-03**: The updater is inert in dev/unpackaged runs — guarded by `app.isPackaged`, it never errors during `npm start` or `electron .`
+- [x] **UPD-03**: The updater is inert in dev/unpackaged runs — guarded by `app.isPackaged`, it never errors during `npm start` or `electron .`
 
 ### Release CI (CI)
 
@@ -69,7 +69,7 @@ Which phases cover which requirements. Phase assignments populated during roadma
 | PKG-04 | Phase 6 | Complete |
 | UPD-01 | Phase 7 | Complete |
 | UPD-02 | Phase 7 | Complete |
-| UPD-03 | Phase 7 | Pending |
+| UPD-03 | Phase 7 | Complete |
 | CI-01 | Phase 8 | Pending |
 | CI-02 | Phase 8 | Pending |
 | CI-03 | Phase 8 | Pending |
