@@ -30,7 +30,7 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
 **Execution is strictly dependency-ordered:** the updater embeds into a package (so Phase 6 must exist before Phase 7), and CI merely automates the now-proven local build→package→publish chain (so Phase 7 before Phase 8). Auto-update is only *fully* observable across two sequential published releases, so that proof lives in Phase 8.
 
 - [x] **Phase 6: Packaging — Local Windows NSIS Installer** - electron-builder wraps the existing `dist/` into a per-user NSIS `.exe` that installs and runs the full editor loop (completed 2026-07-18)
-- [ ] **Phase 7: Auto-Update from GitHub Releases** - electron-updater self-updates a packaged app on launch, inert in dev
+- [x] **Phase 7: Auto-Update from GitHub Releases** - electron-updater self-updates a packaged app on launch, inert in dev (completed 2026-07-18)
 - [ ] **Phase 8: Release CI — Publish-on-Tag + Two-Release Validation** - GitHub Actions builds + publishes the installer on `v*` tag push, proven by an end-to-end self-update
 
 ## Phase Details
@@ -69,7 +69,7 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
   3. In dev/unpackaged runs (`npm start` / `electron .`), the updater is inert — guarded by `app.isPackaged`, it never fires or throws.
   4. electron-updater ships as a runtime dependency that is physically present inside `app.asar` after packaging (not pruned) and is listed in esbuild's `external` array so it resolves from `node_modules`.
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 **Wave 1** *(parallel — no file overlap)*
 
   - [x] 07-01-PLAN.md — electron-updater dependency + esbuild `external` + `publish` block + packaging config test; supply-chain legitimacy gate (UPD-01/02, D-06/D-07, success criterion 4 static slice)
@@ -77,7 +77,7 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-  - [ ] 07-03-PLAN.md — Manual Windows/CI packaged acceptance gate: electron-updater physically in `app.asar` + app runs + `updater.log` written (UPD-01/02/03 runtime)
+  - [x] 07-03-PLAN.md — Manual Windows/CI packaged acceptance gate: electron-updater physically in `app.asar` + app runs + `updater.log` written (UPD-01/02/03 runtime)
 
 ### Phase 8: Release CI — Publish-on-Tag + Two-Release Validation
 
@@ -106,5 +106,5 @@ Phases execute in numeric order: 6 → 7 → 8
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | v1.0 | 5/5 | Complete | 2026-07-04 |
 | 5. Renderer UI — Browse, Search, Edit, Preview | v1.0 | 8/8 | Complete | 2026-07-05 |
 | 6. Packaging — Local Windows NSIS Installer | v1.1 | 3/3 | Complete    | 2026-07-18 |
-| 7. Auto-Update from GitHub Releases | v1.1 | 2/3 | In Progress|  |
+| 7. Auto-Update from GitHub Releases | v1.1 | 3/3 | Complete   | 2026-07-18 |
 | 8. Release CI — Publish-on-Tag + Two-Release Validation | v1.1 | 0/TBD | Not started | - |
