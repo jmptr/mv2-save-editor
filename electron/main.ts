@@ -159,6 +159,14 @@ app.whenReady().then(() => {
   registerIpcHandlers();
   createWindow();
 
+  // Packaged-only auto-update seam (D-02/D-05, UPD-03). The lazy `require('./updater')` keeps dev
+  // strictly inert — electron-updater is never even loaded during `npm start` / `electron .`. It stays
+  // a literal require in dist/main.js because electron-updater is in esbuild `external[]`.
+  if (app.isPackaged) {
+    const { initAutoUpdater } = require('./updater') as typeof import('./updater');
+    initAutoUpdater();
+  }
+
   // macOS: re-create a window when the dock icon is clicked and none are open.
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
