@@ -29,7 +29,7 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
 
 **Execution is strictly dependency-ordered:** the updater embeds into a package (so Phase 6 must exist before Phase 7), and CI merely automates the now-proven local build→package→publish chain (so Phase 7 before Phase 8). Auto-update is only *fully* observable across two sequential published releases, so that proof lives in Phase 8.
 
-- [ ] **Phase 6: Packaging — Local Windows NSIS Installer** - electron-builder wraps the existing `dist/` into a per-user NSIS `.exe` that installs and runs the full editor loop
+- [x] **Phase 6: Packaging — Local Windows NSIS Installer** - electron-builder wraps the existing `dist/` into a per-user NSIS `.exe` that installs and runs the full editor loop (completed 2026-07-18)
 - [ ] **Phase 7: Auto-Update from GitHub Releases** - electron-updater self-updates a packaged app on launch, inert in dev
 - [ ] **Phase 8: Release CI — Publish-on-Tag + Two-Release Validation** - GitHub Actions builds + publishes the installer on `v*` tag push, proven by an end-to-end self-update
 
@@ -47,7 +47,7 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
   3. Installing runs per-user with no admin/UAC prompt (`oneClick: true`, `perMachine: false`), creates a Start Menu shortcut, and provides a working uninstaller.
   4. The installed app shows its own application `.ico` icon and carries a set `appId` and product name.
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 **Wave 1**
 
   - [x] 06-01-PLAN.md — Placeholder application icon: zero-dep `.ico` generator + committed `build/icon.ico` + icon-validity test (PKG-04)
@@ -55,7 +55,7 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-  - [ ] 06-03-PLAN.md — Manual Windows install-and-run acceptance gate (PKG-01/02/03 runtime)
+  - [x] 06-03-PLAN.md — Manual Windows install-and-run acceptance gate (PKG-01/02/03 runtime)
 
 ### Phase 7: Auto-Update from GitHub Releases
 
@@ -97,6 +97,6 @@ Phases execute in numeric order: 6 → 7 → 8
 | 3. Patcher + Validation + XP Table | v1.0 | 2/2 | Complete | 2026-07-04 |
 | 4. Electron Shell + Secure IPC + Non-Destructive Write | v1.0 | 5/5 | Complete | 2026-07-04 |
 | 5. Renderer UI — Browse, Search, Edit, Preview | v1.0 | 8/8 | Complete | 2026-07-05 |
-| 6. Packaging — Local Windows NSIS Installer | v1.1 | 2/3 | In Progress|  |
+| 6. Packaging — Local Windows NSIS Installer | v1.1 | 3/3 | Complete   | 2026-07-18 |
 | 7. Auto-Update from GitHub Releases | v1.1 | 0/TBD | Not started | - |
 | 8. Release CI — Publish-on-Tag + Two-Release Validation | v1.1 | 0/TBD | Not started | - |
