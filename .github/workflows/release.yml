@@ -1,0 +1,33 @@
+# Tag-triggered publish-to-GitHub-Release workflow (CI-01/02/03).
+# Mirrors the proven local `npm run package` chain (package.json), adding only
+# `--publish onTagOrDraft` and the GH_TOKEN env so a `v*` tag creates a DRAFT Release.
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'          # CI-01: only version tags trigger a publish
+
+permissions:
+  contents: write     # CI-02: GITHUB_TOKEN must be able to create/upload the Release (least privilege)
+
+jobs:
+  release:
+    runs-on: windows-latest        # CI-01: native Windows NSIS toolchain (no Wine)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22         # CI-01: Node 22
+          cache: npm               # caches ~/.npm (NOT node_modules) — safe across runs/OS
+
+      - run: npm ci                # plain install — resolves @esbuild/win32-x64 from the committed lockfile
+
+      - run: npm run build:electron   # CI-01: build BEFORE packaging; electron-builder never rebuilds TS
+
+      # CI-02/03: package the built dist/ and publish assets to a DRAFT GitHub Release.
+      # electron-builder defaults to a draft release → a human publishes later (CI-03 gate).
+      - run: npx electron-builder --win --config electron-builder.json --publish onTagOrDraft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # CI-02: electron-builder reads the token from env
