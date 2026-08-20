@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Packaging & Distribution
-current_phase: 8
-current_phase_name: Release CI — Publish-on-Tag + Two-Release Validation
-status: planned
-stopped_at: Phase 8 planned (2 plans, ready to execute)
-last_updated: "2026-07-18T20:57:27.005Z"
-last_activity: 2026-07-18
-last_activity_desc: Phase 8 planning complete (2 plans, 2 waves)
+current_phase: 08
+current_phase_name: release-ci-publish-on-tag-two-release-validation
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-08-20T14:14:28.780Z"
+last_activity: 2026-08-20
+last_activity_desc: Phase 08 execution started
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 6
+  total_plans: 8
   completed_plans: 6
   percent: 67
 ---
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-09)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** Phase 8 — Release CI (planned, ready to execute)
+**Current focus:** Phase 08 — release-ci-publish-on-tag-two-release-validation
 
 ## Current Position
 
-Phase: 8 — Release CI — Publish-on-Tag + Two-Release Validation
-Plan: 2 plans ready (2 waves)
-Status: Planned — ready to execute
-Last activity: 2026-07-18 — Phase 8 planning complete (2 plans)
+Phase: 08 (release-ci-publish-on-tag-two-release-validation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-08-20 — Phase 08 execution started
 
 Progress (v1.1): [██████░░░░] 67% (2 of 3 phases; Phase 8 planned)
 
@@ -68,6 +68,7 @@ Full decision log lives in PROJECT.md Key Decisions table. Decisions shaping v1.
 - [Phase ?]: Phase 6 icon: single 256x256 32bpp entry via zero-dep node:fs writer (scripts/make-icon.mjs); avoids png-to-ico/sharp supply-chain surface (T-06-01).
 - [Phase ?]: Phase 6 P02: electron-builder.json in JSON (not YAML) for zero-dep require()-assertability in node:test; no custom artifactName (default template yields MV2 Save Editor Setup 1.1.0.exe); electron-builder pinned ^26
 - [Phase 07]: 07-02: updater.ts stays dev-inert via lazy require of electron/electron-updater inside app.isPackaged guard; zero-dep fs logger swallows write failures (D-04/D-05/UPD-03)
+- [Phase 08]: 08-01: release.yml mirrors the local package chain adding only --publish onTagOrDraft + GH_TOKEN env; default draft is the CI-03 human-publish gate; contents:write only (no PAT/write-all/marketplace action); @esbuild/win32-x64 lockfile coverage guarded by a zero-dep static test
 
 ### Pending Todos
 
@@ -92,11 +93,12 @@ Items acknowledged and carried forward:
 | Phase 06 P02 | 2min | 2 tasks | 6 files |
 | Phase 07 P01 | 8min | 3 tasks | 5 files |
 | Phase 07 P02 | 12min | 2 tasks | 4 files |
+| Phase 08 P01 | 4min | 2 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-07-18T20:57Z
-Stopped at: Phase 8 planned (2 plans, 2 waves; plan-checker PASS after 1 revision) — pushed to claude/gsd-execute-phase-6-caly71
+Last session: 2026-08-20T14:14:28.768Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: .planning/phases/08-release-ci-publish-on-tag-two-release-validation/08-01-PLAN.md
 
 ## Operator Next Steps

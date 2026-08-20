@@ -23,9 +23,9 @@ Requirements for the Packaging & Distribution milestone. Each maps to exactly on
 
 ### Release CI (CI)
 
-- [ ] **CI-01**: Pushing a `v*` version tag triggers a GitHub Actions workflow that builds the Windows installer on `windows-latest` (Node 22, `npm run build:electron` before packaging)
-- [ ] **CI-02**: The workflow publishes the installer + `latest.yml` + `.blockmap` as assets on the matching GitHub Release, so the auto-updater feed resolves (workflow has `permissions: contents: write` and passes `GH_TOKEN`)
-- [ ] **CI-03**: The release is created as a draft and published manually — a safe gate, since the auto-updater ignores drafts until they are published
+- [x] **CI-01**: Pushing a `v*` version tag triggers a GitHub Actions workflow that builds the Windows installer on `windows-latest` (Node 22, `npm run build:electron` before packaging)
+- [x] **CI-02**: The workflow publishes the installer + `latest.yml` + `.blockmap` as assets on the matching GitHub Release, so the auto-updater feed resolves (workflow has `permissions: contents: write` and passes `GH_TOKEN`)
+- [x] **CI-03**: The release is created as a draft and published manually — a safe gate, since the auto-updater ignores drafts until they are published
 
 ## v2 Requirements
 
@@ -70,9 +70,9 @@ Which phases cover which requirements. Phase assignments populated during roadma
 | UPD-01 | Phase 7 | Complete |
 | UPD-02 | Phase 7 | Complete |
 | UPD-03 | Phase 7 | Complete |
-| CI-01 | Phase 8 | Pending |
-| CI-02 | Phase 8 | Pending |
-| CI-03 | Phase 8 | Pending |
+| CI-01 | Phase 8 | Complete |
+| CI-02 | Phase 8 | Complete |
+| CI-03 | Phase 8 | Complete |
 
 **Coverage:**
 
