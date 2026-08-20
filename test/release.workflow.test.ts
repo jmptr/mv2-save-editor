@@ -52,6 +52,18 @@ test('release workflow grants least-privilege contents: write and passes GH_TOKE
   );
 });
 
+test('release workflow pre-creates one draft release before packaging to avoid duplicate drafts (CI-02/03)', () => {
+  // electron-builder races on a first publish (no release exists yet) and can create duplicate
+  // drafts, splitting the assets. A `gh release create --draft` guard makes it reuse one release.
+  assert.match(wf, /gh release create[^\n]*--draft/, 'must pre-create a draft release (idempotent guard)');
+  // The pre-create step must run before electron-builder publishes.
+  assert.match(
+    wf,
+    /gh release create[\s\S]*npx electron-builder/,
+    'the draft pre-create step must precede the electron-builder publish step',
+  );
+});
+
 test('release workflow keeps the default-draft gate — no forced-publish override (CI-03)', () => {
   assert.doesNotMatch(wf, /releaseType/, 'must not override releaseType (default draft is the CI-03 gate)');
   assert.doesNotMatch(wf, /--publish\s+always/, 'must not force publish on every run');

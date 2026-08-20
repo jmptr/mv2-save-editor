@@ -26,7 +26,18 @@ jobs:
 
       - run: npm run build:electron   # CI-01: build BEFORE packaging; electron-builder never rebuilds TS
 
-      # CI-02/03: package the built dist/ and publish assets to a DRAFT GitHub Release.
+      # Pre-create the draft Release so electron-builder uploads into ONE existing release.
+      # On a first publish (no release yet exists) electron-builder races across its parallel
+      # asset uploads and can create duplicate drafts, splitting the .exe / latest.yml / .blockmap
+      # across two of them. Making the release exist first forces reuse (match by tag). Idempotent.
+      - name: Ensure a single draft release exists
+        shell: bash
+        run: gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --draft --title "$TAG" --notes ""
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}   # e.g. v1.1.1 — equals v${package.json.version} (Version=Tag invariant)
+
+      # CI-02/03: package the built dist/ and publish assets to the DRAFT GitHub Release above.
       # electron-builder defaults to a draft release → a human publishes later (CI-03 gate).
       - run: npx electron-builder --win --config electron-builder.json --publish onTagOrDraft
         env:
