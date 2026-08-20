@@ -35,8 +35,8 @@ test('electron-builder.json: win target + icon and files glob (PKG-02/04)', () =
   );
 });
 
-test('package.json: version 1.1.0, package script chain, electron-builder devDep (D-04/D-05)', () => {
-  assert.equal(pkg.version, '1.1.0');
+test('package.json: version 1.1.1, package script chain, electron-builder devDep (D-04/D-05)', () => {
+  assert.equal(pkg.version, '1.1.1');
 
   const packageScript = pkg.scripts.package;
   assert.ok(packageScript, 'package.json must define a `package` script');
@@ -53,9 +53,9 @@ test('package.json: version 1.1.0, package script chain, electron-builder devDep
   );
 });
 
-test('default artifactName derives "MV2 Save Editor Setup 1.1.0.exe" (PKG-01)', () => {
+test('default artifactName derives "MV2 Save Editor Setup 1.1.1.exe" (PKG-01)', () => {
   // electron-builder's default NSIS artifactName template is "${productName} Setup ${version}.${ext}".
   // No custom artifactName is set, so the installer filename derives from productName + version.
   const installerName = `${builderConfig.productName} Setup ${pkg.version}.exe`;
-  assert.equal(installerName, 'MV2 Save Editor Setup 1.1.0.exe');
+  assert.equal(installerName, 'MV2 Save Editor Setup 1.1.1.exe');
 });
