@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Packaging & Distribution
-current_phase: 08
-current_phase_name: release-ci-publish-on-tag-two-release-validation
-status: complete
-stopped_at: Phase 8 complete (2/2 plans); v1.1 milestone complete — SC4 two-release self-update proven
-last_updated: "2026-08-20T16:58:03.027Z"
+current_phase: 1
+status: Awaiting next milestone
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-08-20T18:31:06.000Z"
 last_activity: 2026-08-20
-last_activity_desc: Phase 8 complete — SC4 self-update (v1.1.0 → v1.1.1) proven on Windows
+last_activity_desc: Milestone v1.1 completed and archived
 progress:
   total_phases: 3
   completed_phases: 3
   total_plans: 8
   completed_plans: 8
   percent: 100
+current_phase_name: release-ci-publish-on-tag-two-release-validation
 ---
 
 # Project State
@@ -28,12 +28,10 @@ See: .planning/PROJECT.md (updated 2026-07-09)
 
 ## Current Position
 
-Phase: 08 (release-ci-publish-on-tag-two-release-validation) — ✅ COMPLETE (2/2 plans)
-Plan: 2 of 2 complete
-Status: v1.1 milestone complete (3/3 phases)
-Last activity: 2026-08-20 — SC4 two-release self-update (v1.1.0 → v1.1.1) observed on Windows
-
-Progress (v1.1): [██████████] 100% (3 of 3 phases; 8 of 8 plans)
+Phase: Milestone v1.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-20 — Milestone v1.1 completed and archived
 
 ## Roadmap (v1.1)
 
@@ -50,7 +48,10 @@ Progress (v1.1): [██████████] 100% (3 of 3 phases; 8 of 8 pl
 - Total plans completed: 23 (across Phases 1-5)
 - Milestone timeline: 2026-07-03 → 2026-07-05 (3 days)
 
-**v1.1:** no plans executed yet.
+**Velocity (v1.1, shipped):**
+
+- Total plans completed: 8 (across Phases 6-8), 13 code commits
+- Milestone timeline: 2026-07-09 → 2026-08-20
 
 *Updated after each plan completion*
 
@@ -103,12 +104,10 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-08-20T14:14:28.768Z
-Stopped at: Completed 08-01-PLAN.md
-Resume file: .planning/phases/08-release-ci-publish-on-tag-two-release-validation/08-01-PLAN.md
+Last session: 2026-08-20T18:31Z
+Stopped at: v1.1 milestone completed and archived (audit passed 10/10; SC4 proven)
+Resume file: — (start next milestone with /gsd-new-milestone)
 
 ## Operator Next Steps
 
-- Execute the phase with `/gsd-execute-phase 8` (Wave 1: 08-01 release.yml + static workflow/lockfile test — automatable, any-OS; Wave 2: 08-02 two blocking human-verify gates — real tag→draft→publish→install + v1.1.0→v1.1.1 two-release self-update proof on Windows).
-- Working defaults recorded in the plans as explicit assumptions (no discuss-phase was run): draft-then-manual publish; direct `electron-builder --publish onTagOrDraft`; SC4 two-release proof as a manual Windows gate. Confirm/override at execute time.
-- Version=tag invariant: bumping `package.json.version` for a release is a lockstep edit with `test/packaging.config.test.ts` (both the version assertion AND the installer-name literal).
+- Start the next milestone with /gsd-new-milestone

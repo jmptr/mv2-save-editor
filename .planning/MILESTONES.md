@@ -1,5 +1,21 @@
 # Milestones
 
+## v1.1 Packaging & Distribution (Shipped: 2026-08-20)
+
+**Phases completed:** 3 phases, 8 plans, 13 tasks
+
+**Key accomplishments:**
+
+- Zero-dependency pure-Node ICO writer producing a committed 256x256 build/icon.ico that clears electron-builder's Windows icon floor, gated by a binary-parse test (PKG-04).
+- electron-builder.json encoding the locked NSIS one-click packaging config (appId, productName, release/ output, lean asar, build/icon.ico) with the version bump to 1.1.0, the chained `package` script, the electron-builder ^26 devDependency, and two node:test suites pinning config + dist sibling layout.
+- Windows acceptance PASSED — a native-Windows `npm run package` produced `MV2 Save Editor Setup 1.1.0.exe`, and the installed app ran the full editor loop, after two mid-gate fixes (PNG icon source + `--win` target).
+- electron-updater@^6.8.9 wired as a production dependency kept external by esbuild, with a deterministic github/jmptr/mv2-save-editor publish block and a static drift-pinning test.
+- Zero-dep fs logger plus an `app.isPackaged`-guarded lazy-require `initAutoUpdater()` that sets the logger, attaches a dual-channel error trap, and fires one `checkForUpdatesAndNotify()` launch check — strictly inert in dev.
+- Windows acceptance PASSED — a native-Windows `npm run package` produced the installer with `electron-updater` physically inside `app.asar`; the installed app ran the full editor loop and wrote `updater.log`, with the absent-feed error logged silently and non-blockingly.
+- SC4 PASSED end-to-end.
+
+---
+
 ## v1.0 MVP (Shipped: 2026-07-06)
 
 **Phases completed:** 5 phases, 23 plans, 44 tasks
@@ -31,6 +47,7 @@
 **Delivered:** The complete load → browse/search → edit → preview → confirm → non-destructive write loop for Melvor Idle 2 saves, byte-exact and validated by an in-game load.
 
 **Stats:**
+
 - Timeline: 2026-07-03 → 2026-07-05 (3 days)
 - Requirements: 14/14 v1 validated
 - Source: ~4,467 LOC (src/ + electron/); tests: ~4,189 LOC; suite 272/272 green; format core 100% line+branch
