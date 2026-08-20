@@ -31,7 +31,7 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
 
 - [x] **Phase 6: Packaging — Local Windows NSIS Installer** - electron-builder wraps the existing `dist/` into a per-user NSIS `.exe` that installs and runs the full editor loop (completed 2026-07-18)
 - [x] **Phase 7: Auto-Update from GitHub Releases** - electron-updater self-updates a packaged app on launch, inert in dev (completed 2026-07-18)
-- [ ] **Phase 8: Release CI — Publish-on-Tag + Two-Release Validation** - GitHub Actions builds + publishes the installer on `v*` tag push, proven by an end-to-end self-update
+- [x] **Phase 8: Release CI — Publish-on-Tag + Two-Release Validation** - GitHub Actions builds + publishes the installer on `v*` tag push, proven by an end-to-end self-update (completed 2026-08-20)
 
 ## Phase Details
 
@@ -91,14 +91,14 @@ Post-ship fix: bank phantom-stack corruption bug root-caused + fixed via explici
   3. The release is created as a draft and published manually — the auto-updater ignores it until a human publishes, giving a safe gate.
   4. Two-release proof: after publishing v1.1.0, installing it, then publishing a second bump (v1.1.1), the installed v1.1.0 client detects, downloads, and applies the update.
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 **Wave 1**
 
   - [x] 08-01-PLAN.md — Tag-triggered `release.yml` workflow + zero-dep static workflow/lockfile test (CI-01/02/03 static slice)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-  - [ ] 08-02-PLAN.md — Manual Windows/GitHub runtime gate: tag→draft→publish→install, plus the v1.1.1 lockstep bump and the two-release self-update proof (CI-01/02/03 runtime + SC4)
+  - [x] 08-02-PLAN.md — Manual Windows/GitHub runtime gate: tag→draft→publish→install, plus the v1.1.1 lockstep bump and the two-release self-update proof (CI-01/02/03 runtime + SC4)
 
 ## Progress
 
@@ -114,4 +114,4 @@ Phases execute in numeric order: 6 → 7 → 8
 | 5. Renderer UI — Browse, Search, Edit, Preview | v1.0 | 8/8 | Complete | 2026-07-05 |
 | 6. Packaging — Local Windows NSIS Installer | v1.1 | 3/3 | Complete    | 2026-07-18 |
 | 7. Auto-Update from GitHub Releases | v1.1 | 3/3 | Complete   | 2026-07-18 |
-| 8. Release CI — Publish-on-Tag + Two-Release Validation | v1.1 | 1/2 | In Progress|  |
+| 8. Release CI — Publish-on-Tag + Two-Release Validation | v1.1 | 2/2 | Complete   | 2026-08-20 |
