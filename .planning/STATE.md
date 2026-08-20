@@ -1,142 +1,74 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-current_phase: 0
-status: Awaiting next milestone
-stopped_at: v1.0 MVP shipped and archived (tag v1.0); awaiting /gsd-new-milestone
-last_updated: "2026-07-06T00:04:55.629Z"
-last_activity: 2026-07-06
-last_activity_desc: Milestone v1.0 completed and archived
+milestone: v1.1
+milestone_name: Packaging & Distribution
+current_phase: 08
+current_phase_name: release-ci-publish-on-tag-two-release-validation
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-08-20T14:14:28.780Z"
+last_activity: 2026-08-20
+last_activity_desc: Phase 08 execution started
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 23
-  completed_plans: 23
-  percent: 100
-current_phase_name: renderer-ui-browse-search-edit-preview
+  total_phases: 3
+  completed_phases: 2
+  total_plans: 8
+  completed_plans: 6
+  percent: 67
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-04)
+See: .planning/PROJECT.md (updated 2026-07-09)
 
 **Core value:** Turn a fiddly, error-prone manual save-editing process into a fast, safe, repeatable one — the editor must always produce a `.sav` the game can load without corruption.
-**Current focus:** v1.0 MVP shipped — planning next milestone
+**Current focus:** Phase 08 — release-ci-publish-on-tag-two-release-validation
 
 ## Current Position
 
-Phase: Milestone v1.0 complete
-Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-06 — Milestone v1.0 completed and archived
+Phase: 08 (release-ci-publish-on-tag-two-release-validation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-08-20 — Phase 08 execution started
+
+Progress (v1.1): [██████░░░░] 67% (2 of 3 phases; Phase 8 planned)
+
+## Roadmap (v1.1)
+
+| Phase | Requirements | Depends on | Status |
+|-------|--------------|------------|--------|
+| 6. Packaging — Local Windows NSIS Installer | PKG-01..04 | Phase 5 (v1.0 dist/) | ✅ Complete (3/3) |
+| 7. Auto-Update from GitHub Releases | UPD-01..03 | Phase 6 | ✅ Complete (3/3) |
+| 8. Release CI — Publish-on-Tag + Two-Release Validation | CI-01..03 | Phase 7 | Planned (2 plans) |
 
 ## Performance Metrics
 
-**Velocity:**
+**Velocity (v1.0, shipped):**
 
-- Total plans completed: 23
-- Average duration: 22 min
-- Total execution time: 0.7 hours
+- Total plans completed: 23 (across Phases 1-5)
+- Milestone timeline: 2026-07-03 → 2026-07-05 (3 days)
 
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01 P01 | 12min | 3 tasks | 5 files |
-| 01 P02 | 32min | 2 tasks | 2 files |
-| 01 | 3 | - | - |
-| 02 | 5 | - | - |
-| 03 | 2 | - | - |
-| 04 | 5 | - | - |
-| 05 | 8 | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: 01-01 (12min), 01-02 (32min)
-- Trend: —
+**v1.1:** no plans executed yet.
 
 *Updated after each plan completion*
-| Phase 01 P03 | 13min | - tasks | - files |
-| Phase 02 P01 | 11min | 2 tasks | 5 files |
-| Phase 02 P02 | 11min | 2 tasks | 3 files |
-| Phase 02 P03 | 12min | 2 tasks | 4 files |
-| Phase 02 P04 | 15min | 2 tasks | 2 files |
-| Phase 02 P05 | 18min | 2 tasks | 2 files |
-| Phase 04 P01 | 3 | 2 tasks | 2 files |
-| Phase 04 P02 | 3min | 2 tasks | 3 files |
-| Phase 04 P03 | 12 | 2 tasks | 4 files |
-| Phase 04 P04 | 6min | 3 tasks | 4 files |
-| Phase 04 P05 | 21min | 3 tasks | 3 files |
-| Phase 05 P01 | 12min | 2 tasks | 5 files |
-| Phase 05 P02 | 4 | 2 tasks | 8 files |
-| Phase 05 P03 | 3min | 2 tasks | 6 files |
-| Phase 05 P04 | 8min | 2 tasks | 3 files |
-| Phase 05 P05 | 6min | 2 tasks | 3 files |
-| Phase 05 P06 | 2min | 2 tasks | 2 files |
-| Phase 05 P07 | 5min | 2 tasks | 3 files |
-| Phase 05 P08 | 35min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Full decision log lives in PROJECT.md Key Decisions table. Decisions shaping v1.1:
 
-- Roadmap: Inside-out build order — prove the pure format core byte-exact (Phases 1-3) before any Electron shell (Phases 4-5).
-- Roadmap: IO-03 (no-op round-trip + length invariant) anchored in Phase 1 codec layer as the first correctness gate.
-- Roadmap: EDIT-04 (XP-table auto-compute) mapped to Phase 3, where the verified StandardExperienceTable lives; Phase 5 surfaces the level input.
-- [Phase ?]: Plan 01-01: Added ignoreDeprecations 6.0 to tsconfig — TS 6 deprecated moduleResolution=node10 (TS5107); needed to keep D-06 CJS+node resolution green under TS 6.0.3
-- [Phase ?]: Plan 01-01: Added types:[node] to tsconfig — TS 6 no longer auto-includes @types/* by default; required for Buffer/node:test/node:assert/strict to resolve under strict mode
-- [Phase ?]: Plan 01-01: Did NOT approve esbuild postinstall (npm allow-scripts) — tsx works without it (prebuilt binary); least-privilege supply-chain stance
-- [Phase ?]: Plan 01-01: Did NOT mark IO-03 complete — IO-03 (no-op round-trip + length invariant) is the codec requirement owned by Plan 02; Plan 01-01 only scaffolded the toolchain
-- [Phase ?]: Plan 01-02: Brotli param constants via zlib.constants.BROTLI_PARAM_* (named node:zlib export does not exist in Node 24 — used named imports + constants.BROTLI_PARAM_LARGE_WINDOW)
-- [Phase ?]: Plan 01-02: Named imports for node:zlib + node:assert/strict (not default) to eliminate esbuild __toESM interop helper and satisfy the D-04 --100 branch gate
-- [Phase ?]: Plan 01-02: Targeted /* c8 ignore */ comments suppress the residual esbuild __copyProps defensive arm (NOT codec logic — proven via pure-CJS probe); did NOT lower the --100 threshold
-- [Phase ?]: Plan 01-02: IO-03 COMPLETE — codec round-trips the real .sav byte-identical (decompressed-buffer) + length invariant (2,284,747) + large-window rejection (T-1-05) + bomb cap (T-1-03); 100% lines+branches on src/codec.ts
-- [Phase ?]: Plan 02-01: ViewCandidate (offset-free) in ViewModel vs FieldCandidate (offset-bearing) in FieldTable — only interpretation consistent with 'unresolvedFields has candidates' + 'no offset key at any depth' (SC-4)
-- [Phase ?]: Plan 02-01: int64 precision enforced at type level via discriminated union (Int64FieldEntry.value: bigint) — tsc rejects value: number for kind 'int64' (T-02-06); no runtime guard (type-level sufficient for v1)
-- [Phase ?]: Plan 02-01: Carried esbuild-interop /* c8 ignore */ pattern from 01-02/01-03 to src/field-table.ts — 100% coverage on all metrics without lowering --100 threshold
-- [Phase ?]: Plan 02-01: FIXTURE_BUFFER cached at module load in test/helpers/fixture.ts (decompressed once, returned by reference) — matches primitives.test.ts pattern
-- [Phase ?]: Plan 02-01: Did NOT mark IO-01 complete — IO-01 (parse the layout) is owned by plans 02-02..02-05; Plan 02-01 only establishes type contracts + test harness
-- [Phase 02]: Plan 02-02: Typed-error split — ParseError for explicit region-bound violations (count pre-check, negative size, region overrun, delta-0 mismatch); BinaryReader native RangeError propagated for OOB / malformed-7-bit-prefix (T-02-02, never swallowed)
-- [Phase 02]: Plan 02-02: Count pre-check bounds the int32 count against the enclosing region (count*MIN_ITEM_FRAMING=5 > remaining → ParseError) BEFORE looping — a giant count (2^31-1) throws before any iteration/allocation (T-02-01)
-- [Phase 02]: Plan 02-02: parseSaveHeader emits ONLY header.GP + header.SlayerCoins as FieldEntries (readOnly + mirrors 'wallet.GoldPieces'/'wallet.SlayerCoins', SC-2); TotalLevel/name/gamemode are summary-only (PROJECT.md defers header editing to a later milestone)
-- [Phase 02]: Plan 02-02: Did NOT mark IO-01 complete (mirrors 02-01) — 02-02 delivers the structural skeleton (version→SaveHeader→entity list→component boundaries) but full IO-01 (bank 02-04 + skills 02-03 + orchestrator 02-05) ships across Phase 2; IO-01 marked complete by 02-05
-- [Phase ?]: [Phase 02]: Plan 02-03: Currency-by-ID (not by order) — fixture wallet [GoldPieces, PrayerPoints, SlayerCoins] has PrayerPoints BETWEEN GP and SC; string-keying (MelvorBase:GoldPieces/SlayerCoins) is the decisive correctness fix (RESEARCH Pattern 2)
-- [Phase ?]: [Phase 02]: Plan 02-03: RequiredFieldMissingError for missing GP uses Plan 01 class with fieldKey=wallet.GoldPieces (actionable); SlayerCoins authoritative but NOT required; Experience keys component-relative (experience.xp/levelCap/level), 02-05 re-keys per skill; LevelCap readOnly (Pitfall 5); SC-3 bounds 1<=cap<=200 1<=level<=cap XP finite>=0 size>=16; did NOT mark IO-01 complete (deferred to 02-05)
-- [Phase 02]: Plan 02-04: Bounded marker-search (NOT contiguous walk) — scans 'MelvorBase:' across the whole Inventory region [710,20496), recovers all 689 stacks across every tab (a contiguous walk stops at ~296 at the first tab boundary — RESEARCH §Pitfall 1, T-02-01)
-- [Phase 02]: Plan 02-04: '6-bytes-before-the-length-prefix' recipe — marker hit H → 7-bit prefix at H-1 → stack header [int32 qty][bool placeholder][bool locked] at H-7 (RESEARCH §Pattern 3)
-- [Phase 02]: Plan 02-04: Raw-byte boolean validation (NOT readBool) — placeholder/locked must be genuine booleans (raw byte 0 or 1); readBool would swallow byte>1 as true, masking false matches (SC-3, T-02-05)
-- [Phase 02]: Plan 02-04: Duplicate item IDs across tabs are DISTINCT offset-keyed fields (D-01, NOT D-03 ambiguity — RESEARCH Open Q 3); resolveOne(stacks, matchFn) implements D-03 (resolved/candidates/notFound, never auto-picks — T-02-08) for the DIFFERENT case of a single logical field resolving to >1 offset
-- [Phase 02]: Plan 02-04: Did NOT mark IO-01 complete (mirrors 02-01/02-02/02-03) — 02-04 delivers the bank-item-stack half of IO-01 (SC-1 all 689 stacks + SC-3 context-validation), but full IO-01 (orchestrator parseSave wiring) ships in 02-05
-- [Phase 02]: Plan 02-05: Single-entry orchestrator — parseSave(buffer) → { fieldTable, viewModel } is the one function Phase 3/4/5 consume; one parse pass produces both the offset-bearing FieldTable (patcher) and the offset-free ViewModel (UI)
-- [Phase 02]: Plan 02-05: ViewModel DERIVED by projection (SC-4 by construction) — projectViewModel reads authoritative wallet currencies FROM the FieldTable (so summary reflects the wallet, NOT the readOnly header mirrors — SC-2); int64 GP/SC as string in the ViewModel (JSON/IPC-safe); assertNoOffsets passes
-- [Phase 02]: Plan 02-05: Deterministic re-parse (SC-4/T-02-09) — walk re-derives offsets from reader.offset on every call; nothing cached/persisted; two parseSave calls yield identical FieldTables
-- [Phase 02]: Plan 02-05: Bank located by component NAMES ('Wallet'+'Inventory'), not hard-coded entity ID (T-02-05 — fixture has MelvorBase:Layout not in docs' Known Entity IDs); Skill = any entity with an Experience component (RESEARCH A3, Combat included); re-keys experience.{xp,levelCap,level} → skill.<entityId>.{...}
-- [Phase 02]: Plan 02-05: IO-01 COMPLETE — parseSave delivers the full IO-01 (Brotli-decompress + parse documented layout + re-parse offsets fresh every load); REQUIREMENTS.md updated
-- [Phase ?]: Plan 04-01: OPTION A (allow esbuild postinstall) chosen by human — build-tool-only reversal of Plan 01-01 least-privilege default; Plan 05 uses esbuild build mechanism not tsc fallback
-- [Phase ?]: Plan 04-01: electron pinned EXACTLY at 43.0.0 (no caret) since Electron minors can break; esbuild ^0.28.1; postinstall approval persisted via package.json allowScripts esbuild@0.28.1:true
-- [Phase ?]: Plan 04-05: main.ts wires four save:* IPC handlers as thin composition over pure src/ipc/* (SessionStore/ipc-guards/write-service); toErrorResult maps every typed core error to a discriminated { ok:false, kind } — no exception/offset/bigint crosses the bridge (D-04)
-- [Phase ?]: Plan 04-05: built via esbuild (04-01 OPTION A), 3 entries to dist/ (main+preload node/CJS core-bundled electron-external; renderer browser); main to dist/main.js; test/typecheck byte-unchanged
-- [Phase ?]: Plan 04-05: IO-02 closed end-to-end — human UAT approved confirmed hardened window bridge (no Node access) + non-destructive new .sav with original byte-unchanged; WSL2 needs libnss3/libnspr4/libasound2t64 + GTK stack to launch
-- [Phase ?]: 05-01: Re-keyed bank stacks by per-itemId occurrence index (bank.inventory.<itemId>#<n>) instead of byte offset; FieldEntry.offset still holds the real qtyOffset so the patcher is unchanged (stronger SC-4)
-- [Phase ?]: 05-01: BankItem.fieldKey computed identically in parseSave and projectViewModel over the same walk order, guaranteeing byte-identical keys so main re-resolves them on preview/write
-- [Phase ?]: 05-02: Retired throwaway electron/renderer.ts — orphaned by the renderer.tsx build-entry rename + tightened SaveEditorApi (unknown to WireEdit array); index.html #root replaces its smoke DOM
-- [Phase ?]: 05-02: Did NOT mark BROWSE-01/SAFE-02 complete — plan scaffolds the React build target + type-only IPC contract only; requirements land in downstream renderer plans (defer completion until delivered)
-- [Phase 05]: 05-03: Client validation mirror hand-rolled (not Zod) — Zod number can't hold int64 without a custom string refine; bounds copied from src/patcher.ts, main stays authority (D-04)
-- [Phase 05]: 05-03: int64 thousands-grouping is pure-string (regex insert/strip) so ungroupInt64(groupInt64(d))===d for any digit string — never Number on the value (D-06); format.ts is the sole renderer module value-importing src/experience-table.ts (D-03)
-- [Phase ?]: 05-04: Single pure appReducer (RESEARCH Pattern 2) with Pitfall 5 sibling-clear in SET_EDIT — skill xp+level never both cross (avoids ConflictingEditError)
-- [Phase ?]: 05-04: Dirtiness DERIVED by editsToPayload (valid AND String-normalized change); int64 currency emitted as decimal string as-is; unresolvable fieldKey treated as changed (fail-open)
-- [Phase ?]: [Phase 05]: 05-06: Seed each EditableCell from edits[fieldKey]?.raw ?? loaded value so a pending int64/int32 edit re-displays after a virtualized row unmounts/remounts on scroll
-- [Phase ?]: [Phase 05]: 05-06: Reset bank list scroll on query change via VirtualList key={q} remount; onInvalid dispatches CLEAR_EDIT so an invalid value drops any prior valid edit (D-04)
-- [Phase 05]: 05-07: SkillPanel per-skill edit mode held in a panel-level Record<id,mode> (not row-local) so it survives virtualizer row remount; default mode derives from a pending xp edit else 'level'
-- [Phase 05]: 05-07: PreviewModal Write New Save File CTA disabled with zero rows or any violation — SAFE-02 gate refuses a write main's preview flagged
-- [Phase 05]: 05-07: Banner.errorCopy maps all 8 ErrorKinds to two UI-SPEC strings via exhaustive never-guarded switch — a raw kind is never surfaced (T-05-09)
-- [Phase 05]: 05-08: Manual in-game acceptance PASSED — app-written .sav loads in Melvor Idle 2 with edits persisting; surfaced+fixed the header GP/SlayerCoins snapshot bug (fix 4573e70: patchSave mirror-couples the authoritative wallet write to the header snapshot Melvor reads on load)
+- v1.1 is distribution-only: the v1.0 Electron/esbuild build is untouched — add a package step, a main-process updater seam, and a CI workflow, nothing more.
+- Ship **unsigned** for v1.1: SmartScreen "unknown publisher" click-through is documented, not defeated (reputation is unreachable at solo scale).
+- electron-builder packages the existing `dist/`; it does NOT rebuild TS — CI must run `build:electron` first, then package. Override `directories.output` to `release/` to avoid colliding with esbuild's `dist/`.
+- electron-updater is a **runtime dependency** (else pruned from the asar) and must be added to esbuild's `external[]`; the updater is guarded by `app.isPackaged`.
+- Auto-update is only fully verifiable across TWO sequential published releases — the two-release test is the Phase 8 acceptance gate, not a Phase 7 checkbox.
+- [Phase ?]: Phase 6 icon: single 256x256 32bpp entry via zero-dep node:fs writer (scripts/make-icon.mjs); avoids png-to-ico/sharp supply-chain surface (T-06-01).
+- [Phase ?]: Phase 6 P02: electron-builder.json in JSON (not YAML) for zero-dep require()-assertability in node:test; no custom artifactName (default template yields MV2 Save Editor Setup 1.1.0.exe); electron-builder pinned ^26
+- [Phase 07]: 07-02: updater.ts stays dev-inert via lazy require of electron/electron-updater inside app.isPackaged guard; zero-dep fs logger swallows write failures (D-04/D-05/UPD-03)
+- [Phase 08]: 08-01: release.yml mirrors the local package chain adding only --publish onTagOrDraft + GH_TOKEN env; default draft is the CI-03 human-publish gate; contents:write only (no PAT/write-all/marketplace action); @esbuild/win32-x64 lockfile coverage guarded by a zero-dep static test
 
 ### Pending Todos
 
@@ -144,23 +76,33 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 2 (Parser/FieldTable) is the only area with real open questions: exact Bank-wallet offset (`Walleta` marker), entity-region boundary detection, and item-stack context-validation heuristics must be pinned against a real fixture corpus.
-- Assemble a corpus of real `.sav` fixtures (varied gamemodes, char-name lengths, bank sizes) before Phase 2 so every core phase can test byte-exactly.
+- **Phase 6:** asar sibling resolution of `preload.js` / `index.html` (relative to `dist/main.js`) is the highest-risk unknown — prove it with an installed build before anything else depends on it.
+- **Phase 8:** the esbuild `@esbuild/win32-x64` platform-binary / `package-lock.json` / `allowScripts` interaction on `windows-latest` is the most likely first-CI-run failure — plan a lockfile-coverage check and mirror the local install path.
+- **Phase 8:** electron-builder defaults to a draft release; decide + document draft-then-manual-publish vs auto-publish during Phase 8 planning.
 
 ## Deferred Items
 
-Items acknowledged and carried forward from previous milestone close:
+Items acknowledged and carried forward:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Distribution | macOS/Linux packaging, code signing (DIST-01/02/03) | Deferred to v2 | v1.1 start |
+| Update UX | In-app update UI, release notes, manual check, restart-now (UPDUX-01..04) | Deferred to v1.x/v2 | v1.1 start |
+| Editing | Human-readable names (NAME-01), bulk edits (BULK-01/02), timestamped output + load-time round-trip check (OUT-01/02), header/character editing (HEADER-01) | Deferred beyond v1.1 | v1.0 close |
+| Phase 6 P01 | 4min | 2 tasks | 3 files |
+| Phase 06 P02 | 2min | 2 tasks | 6 files |
+| Phase 07 P01 | 8min | 3 tasks | 5 files |
+| Phase 07 P02 | 12min | 2 tasks | 4 files |
+| Phase 08 P01 | 4min | 2 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-07-05 (resumed)
-Stopped at: v1.0 milestone complete + verified; starting /gsd-debug on bank phantom-stack bug (src/inventory-parser.ts marker-search surfaces phantom editable stacks)
-Resume file: docs/bank-inventory-phantom-stacks.md (open-bug diagnosis)
+Last session: 2026-08-20T14:14:28.768Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: .planning/phases/08-release-ci-publish-on-tag-two-release-validation/08-01-PLAN.md
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Execute the phase with `/gsd-execute-phase 8` (Wave 1: 08-01 release.yml + static workflow/lockfile test — automatable, any-OS; Wave 2: 08-02 two blocking human-verify gates — real tag→draft→publish→install + v1.1.0→v1.1.1 two-release self-update proof on Windows).
+- Working defaults recorded in the plans as explicit assumptions (no discuss-phase was run): draft-then-manual publish; direct `electron-builder --publish onTagOrDraft`; SC4 two-release proof as a manual Windows gate. Confirm/override at execute time.
+- Version=tag invariant: bumping `package.json.version` for a release is a lockstep edit with `test/packaging.config.test.ts` (both the version assertion AND the installer-name literal).

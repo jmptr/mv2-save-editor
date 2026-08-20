@@ -1,0 +1,19 @@
+{
+  "appId": "com.jmptr.mv2-save-editor",
+  "productName": "MV2 Save Editor",
+  "directories": {
+    "output": "release",
+    "buildResources": "build"
+  },
+  "files": ["dist/**", "package.json"],
+  "publish": [{ "provider": "github", "owner": "jmptr", "repo": "mv2-save-editor" }],
+  "win": {
+    "target": "nsis",
+    "icon": "build/icon.png"
+  },
+  "nsis": {
+    "oneClick": true,
+    "perMachine": false,
+    "createStartMenuShortcut": true
+  }
+}

@@ -1,222 +1,314 @@
-# Stack Research
+# Stack Research — v1.1 Packaging & Distribution
 
-**Domain:** Local desktop binary save-file editor (Brotli-compressed .NET BinaryReader/Writer format)
-**Researched:** 2026-07-03
-**Confidence:** HIGH
+**Domain:** Electron desktop-app packaging & auto-update distribution (Windows NSIS installer, published to GitHub Releases via CI)
+**Researched:** 2026-07-09
+**Confidence:** HIGH (both key package versions verified live against the npm registry on 2026-07-09; integration mechanics from stable, long-documented electron-builder/electron-updater behavior)
 
-## TL;DR Recommendation
+> Scope note: This milestone (v1.1) adds ONLY distribution capabilities to the already-built v1.0 app.
+> The core stack (Electron 43.0.0, TypeScript ^6.0.3, React 19, esbuild build, `node:zlib` Brotli,
+> `@tanstack/react-virtual`, `tsx --test` + c8) is fixed and NOT re-researched here. Everything below
+> is additive and sits *around* the existing `scripts/build.mjs` esbuild pipeline. The prior v1.0
+> stack research lives in CLAUDE.md and PROJECT.md.
 
-**Electron + TypeScript + React + Vite (via electron-vite), with a hand-rolled `Buffer`/`DataView`
-binary reader that records offsets and patches bytes in place. Test round-trips with Vitest.**
-
-The single most important fact driving this stack: **the save workflow is a Node workload.**
-Decompression is `zlib.brotliDecompressSync` (built into Node core), and every binary primitive in
-the spec (`int32`/`int64`/`double` LE, 1-byte bool, 7-bit length-prefixed UTF-8 strings) maps
-directly onto Node `Buffer` methods (`readInt32LE`, `readBigInt64LE`, `readDoubleLE`, and their
-`write*` counterparts). Electron's main process **is** full Node.js, so the entire parse/patch/
-recompress pipeline runs with zero external dependencies. This is decisive for the Electron-vs-Tauri
-choice (see below).
+---
 
 ## Recommended Stack
 
-### Core Technologies
+### Core Technologies (new for v1.1)
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| **Electron** | `43.x` | Desktop shell (Node main process + Chromium renderer) | Main process is real Node.js → native `zlib` Brotli + `Buffer` binary ops with **zero deps**. Native OS file open/save dialogs. Matches the existing Node/CommonJS scaffold and the user's stated lean. |
-| **TypeScript** | `5.9.x` (or 6.x if released) | Language for main + renderer | Binary layouts are exactly where a type system pays off: model each field as `{ offset, kind, value, min, max }` and let the compiler catch type/width mistakes before they corrupt a save. |
-| **electron-vite** | `5.x` | Dev server + build tooling for Electron (main/preload/renderer) | Purpose-built: one config bundles all three Electron process types, HMR for the renderer, hot-reload for main. Far less boilerplate than wiring Vite + Electron by hand. |
-| **Vite** | `7.x` | Underlying bundler (used by electron-vite) | Fast dev server + instant HMR = high developer velocity, the explicit optimization target. Shared config with Vitest. |
-| **React** | `19.x` | Renderer UI framework | Largest ecosystem for the two things this UI needs: searchable/virtualized lists and controlled form inputs with validation. Best-supported virtualization libraries target React. |
-| **Node `zlib`** | built-in (Node 20/22 LTS) | Brotli decompress/recompress | `brotliDecompressSync` / `brotliCompressSync` ship in Node core. No `brotli`/`iltorb` npm package needed. |
-| **Node `Buffer` / `DataView`** | built-in | Binary read/patch | `Buffer.readInt32LE/readBigInt64LE/readDoubleLE` + `write*LE` cover every primitive in the spec. `int64` → `BigInt` (use `readBigInt64LE`/`writeBigInt64LE`) to avoid precision loss on GP/Slayer Coins. |
-
-**Recommended editing engine (opinionated, no library):** Write a small recursive-descent reader
-that walks the documented layout (version → SaveHeader → entity list → …) and emits a **flat list of
-editable fields, each carrying its absolute byte offset, kind, current value, and validation bounds**.
-Editing = validate → `buf.write*LE(newValue, offset)` on the decompressed `Buffer` → re-Brotli. This
-is a perfect fit for the v1 constraint ("in-place, same-byte-width edits only") and for the recorded
-lesson "always re-parse offsets fresh." A schema/serialization library is the wrong tool here (see
-"What NOT to Use").
+| Technology | Version | Dep type | Purpose | Why Recommended |
+|------------|---------|----------|---------|-----------------|
+| **electron-builder** | `26.15.6` | **devDependency** | Packages the already-built `dist/` into a Windows NSIS installer `.exe`; generates `latest.yml` + `.blockmap`; publishes assets to the GitHub Release | The de-facto standard packager for Electron. It does **not** compile your TypeScript — it consumes the files esbuild already emitted, wraps them in an Electron runtime, and produces the installer. Pairs natively with electron-updater (both share `builder-util-runtime`). Autodetects the bundled Electron version from the installed `electron` devDep (43.0.0). |
+| **electron-updater** | `6.8.9` | **runtime dependency** (`dependencies`) | Runs inside the main process; on launch checks the GitHub Releases feed, downloads a newer NSIS installer, and applies it | The companion to electron-builder for the "feed = GitHub Releases" model. Reads the `latest.yml` electron-builder uploads, compares versions with semver, and drives the NSIS silent-update flow. **Must be a runtime dependency, never a devDependency** (see the dedicated note below). |
+| **NSIS target** | built into electron-builder | — | The Windows installer format (`win.target: "nsis"`) | NSIS is the **only** Windows target that electron-updater's Windows updater supports end-to-end. It emits the `latest.yml` + `.blockmap` metadata the updater requires and performs the in-place silent replace. `portable`, `zip`, `dir`, and `appx` do **not** wire into the auto-update flow. |
 
 ### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| **@tanstack/react-virtual** | `3.14.x` | List/row virtualization | Bank has hundreds of item stacks and ~30+ skills. Virtualize the browse lists so rendering stays smooth. Headless (you own the markup), tiny, framework-native. |
-| **Zod** | `3.x` (or `4.x`) | Runtime validation of edit inputs + parsed-field bounds | Declaratively express per-field constraints (int32 range, int64/BigInt range, level 1–120, XP ≥ 0) and validate user input before writing. Optional but pairs cleanly with the field-descriptor model. |
-| **electron-builder** | `26.x` | Local packaging (optional) | Only if you eventually want a double-clickable app. Distribution is out of scope for v1, so this is deferred; `electron-vite dev` covers day-to-day use. |
+| *(none required)* | — | — | No extra runtime libraries are needed. electron-builder pulls its own toolchain (`app-builder-lib`, `nsis`, `dmg-builder`, etc.) transitively; electron-updater pulls `builder-util-runtime`, `js-yaml`, `semver`. Do **not** add `electron-log` unless you specifically want the updater's optional logger — it is optional and deferrable. |
 
-**Deliberately minimal:** For v1 you likely need **only** `@tanstack/react-virtual` beyond the
-framework. Brotli and binary parsing are Node built-ins; state can be plain React state/`useReducer`
-or a tiny store — no need for Redux/RTK at this scale.
+### Development / CI Tools
 
-### Development Tools
+| Tool | Version | Purpose | Notes |
+|------|---------|---------|-------|
+| **GitHub Actions** | `windows-latest` runner | CI that builds + publishes on version-tag push | NSIS installers build most reliably on a Windows runner. Trigger on `push` tags matching `v*`. |
+| **actions/checkout** | `v4` | Check out the repo in CI | Standard. |
+| **actions/setup-node** | `v4` | Provision Node in CI | Pin `node-version: 22` (see Node section). Enable `cache: npm`. |
+| **Node.js (CI)** | `22.x` LTS | Runtime that runs esbuild + electron-builder in CI | Matches Electron 43's bundled Node 22 and the existing esbuild `target: 'node22'`. electron-builder itself only needs Node ≥ 14, but 22 keeps CI aligned with the app. |
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| **Vitest** | `4.1.x` | Unit + round-trip tests | Vite-native (reuses electron-vite's transform pipeline), Jest-compatible API. Run parser/patcher tests in the Node environment. |
-| **@types/node** | matches Node LTS | Types for `zlib`, `Buffer`, `fs` | Required for typed main-process code. |
-| **Prettier + ESLint (typescript-eslint)** | latest | Formatting/lint | Standard; keep light for a solo project. |
+---
 
 ## Installation
 
 ```bash
-# Scaffold (React + TypeScript template)
-npm create electron-vite@latest mv2-save-editor
-# choose: React, TypeScript
+# Packager — DEV dependency (build-time only; never ships inside the app)
+npm install -D electron-builder@26.15.6
 
-# Core is provided by the scaffold (electron, react, react-dom, electron-vite, vite, typescript)
-
-# Supporting
-npm install @tanstack/react-virtual zod
-
-# Dev / test
-npm install -D vitest @types/node
-
-# Optional, only when you want a packaged binary
-npm install -D electron-builder
+# Auto-updater — RUNTIME dependency (executes inside the shipped main process)
+npm install electron-updater@6.8.9
 ```
 
-> Note: the existing scaffold declares `"type": "commonjs"`. electron-vite emits the correct module
-> format per process, so let the scaffold set this; don't hand-fight ESM/CJS. Renderer code is bundled
-> by Vite (ESM); main/preload are emitted in the format electron-vite configures.
+Result in `package.json`:
 
-## The Electron vs Tauri Decision (grounded in THIS project)
+```jsonc
+{
+  "devDependencies": {
+    "electron-builder": "26.15.6"   // pin exact — see version note below
+  },
+  "dependencies": {
+    "electron-updater": "6.8.9"     // MUST be here, not in devDependencies
+  }
+}
+```
 
-**Recommendation: Electron. HIGH confidence.**
+---
 
-| Factor | Electron | Tauri | Winner for this project |
-|--------|----------|-------|-------------------------|
-| Brotli decompression | `zlib` built into the Node main process — zero deps | No Node runtime. Must Brotli in Rust (`brotli` crate) or ship a WASM decoder in the webview (browsers' `DecompressionStream` supports gzip/deflate **but not Brotli**) | **Electron** |
-| .NET binary parsing | `Buffer.read*LE` / `write*LE` cover every primitive natively | Do it in Rust, or in-webview with `DataView` + hand-written BigInt for int64 | **Electron** |
-| Language count | One language (TypeScript) end-to-end | Two (Rust backend + TS frontend), unless you push all logic into the webview | **Electron** |
-| Existing scaffold | Already a Node/CommonJS `package.json` | Would restart around a Rust/Cargo toolchain | **Electron** |
-| Developer velocity (the stated goal) | High — reuse Node knowledge, huge ecosystem | Lower here — Rust learning curve for the exact hot path (binary + Brotli) | **Electron** |
-| Bundle size / memory / startup | ~100–150 MB, heavier RAM | ~5–10 MB, lighter | Tauri — **but irrelevant for a single-user local tool that isn't distributed** |
-| Security sandboxing | Requires care (contextIsolation, no `nodeIntegration` in renderer) | Stronger defaults | Tauri — **but the input is a local file the user already owns; not a threat surface that changes the decision** |
+## Integration With the Existing esbuild Build (critical — read this)
 
-Tauri's genuine advantages (tiny bundles, low memory, hardened sandbox) all target **distribution and
-untrusted-input** scenarios. This project is the opposite: a solo tester editing their own local
-files, optimizing for velocity and correctness. Every Tauri advantage is moot, while its one cost —
-losing Node's built-in Brotli and `Buffer` binary API right on the critical path — is exactly what
-this app spends its time doing. **Electron wins decisively.**
+The single most important fact for the roadmapper: **electron-builder does not build your code.**
+It is a packaging step that runs *after* `scripts/build.mjs`. The pipeline is:
 
-If the project ever pivots to public distribution and bundle size becomes a real complaint, Tauri (v2)
-would be worth re-evaluating — but by then the parser would be portable TS that could run in-webview
-with a WASM Brotli decoder, so the rewrite cost is contained.
+```
+npm run build:electron   (esbuild → dist/main.js, dist/preload.js, dist/renderer.js, dist/index.html)
+        ↓
+electron-builder --win   (wraps dist/ + Electron runtime → NSIS installer .exe + latest.yml)
+        ↓
+--publish always         (uploads installer + latest.yml + .blockmap to the GitHub Release)
+```
 
-## Binary Parsing Approach — Why Hand-Rolled, Not a Schema Library
+### `files` / `directories` config (maps esbuild output into the package)
 
-The v1 model is **parse-to-find-offsets, then patch same-width bytes in place**, not
-**deserialize-to-object-graph then re-serialize**. That distinction determines the tool:
+Add a `build` block to `package.json` (or an `electron-builder.yml`). Because esbuild **bundles**
+(`bundle: true`) React, react-dom, and `@tanstack/react-virtual` *into* `dist/renderer.js`, and bundles
+the core + electron-updater *into* `dist/main.js`, the packaged app needs essentially only `dist/` +
+`package.json`. Keep `files` tight:
 
-- **restructure** (`5.x`) and **binary-parser** (`2.2.x`) are declarative *parse ⇄ serialize*
-  libraries. They produce/consume JS objects. To patch a save with them you'd fully decode the file,
-  mutate the object, and **re-encode the entire buffer** — which must reproduce byte-exact output for
-  a `.NET`-written file (including the 7-bit string prefixing and every untouched region). Any
-  encoder mismatch corrupts the save. That's strictly more risk than patching a handful of known
-  offsets in the original buffer.
-- **kaitai-struct** is **parse-only** (no official serialization) → cannot write saves. Out.
-- The format is already fully reverse-engineered in `docs/current-skill.md` with exact offset math.
-  Porting those ~5 read helpers (LEB128 string, int32, int64→BigInt, double, entity walk) to typed
-  `Buffer` code is an afternoon, is auditable, and returns offsets directly — which is precisely what
-  in-place patching needs.
+```jsonc
+"build": {
+  "appId": "com.jmptr.mv2-save-editor",
+  "productName": "MV2 Save Editor",
+  "files": [
+    "dist/**/*",        // the esbuild output (main, preload, renderer, index.html)
+    "package.json"      // Electron reads "main": "dist/main.js" from here
+  ],
+  "directories": {
+    "output": "release",       // ⚠ MUST override — default is "dist", which COLLIDES with esbuild output
+    "buildResources": "build"  // where icon.ico lives (build/icon.ico is auto-detected)
+  },
+  "asar": true
+}
+```
 
-**Verdict:** hand-write a `SaveReader` over Node `Buffer` that yields `{ offset, kind, value, min,
-max }` field descriptors; patch via `buf.write*LE(value, offset)`. Use a schema library only if v2's
-byte-insertion / region-resize work makes full re-serialization unavoidable — and even then, prefer
-extending the hand-rolled writer so you control region-size prefixes explicitly.
+**Collision warning (concrete pitfall):** electron-builder's default `directories.output` is `dist` —
+the *same directory* the esbuild build writes app code into. If left at the default, electron-builder
+will write the installer into `dist/` and may try to pack its own output. **Set `directories.output`
+to `release/` (or `out/`).** Flag this to the phase planner.
 
-## Testing Approach — Binary Round-Trip Correctness
+### esbuild + electron-updater interaction (subtle, must be handled)
 
-The core value is "output `.sav` must round-trip and load in-game," so tests must be **byte-level and
-fixture-driven** (Vitest, Node environment):
+`scripts/build.mjs` runs esbuild with `platform: 'node'`, `external: ['electron']`, `bundle: true`.
+`electron-updater` is **not** in `external`, so esbuild will **inline electron-updater into `dist/main.js`**
+at build time. This is fine and even convenient (no `node_modules` resolution needed at runtime), but has
+two consequences the planner must know:
 
-1. **No-op decompressed round-trip (the golden test):** `decompress(fixture)` → parse → apply **zero**
-   edits → the decompressed buffer must be **byte-identical** to the original decompressed bytes.
-   This proves the parser/patcher touches nothing it shouldn't.
-2. **Edit-then-reparse:** patch a field (GP, item qty, skill XP/Level) → re-parse the patched buffer →
-   assert the field reads back the new value and **every other field is unchanged**.
-3. **Width invariant:** assert each patch writes exactly the field's byte width at its offset (int32=4,
-   int64=8, double=8) and never changes buffer length — enforces the v1 same-width constraint.
-4. **XP-table consistency:** unit-test `compute_xp_table` against the documented milestones
-   (L50=101,331 … L120=104,273,162); test that setting a level writes a consistent XP/Level pair.
-5. **BigInt fidelity:** GP/Slayer Coins are int64 — assert values above `2^53` survive read→write via
-   `BigInt` without precision loss.
+1. electron-updater must be **installed** (present in `node_modules`) when `build:electron` runs — which
+   is exactly why it belongs in `dependencies` (installed by `npm ci` in CI). Placing it in `dependencies`
+   is the canonical, least-surprising choice and future-proofs against ever un-bundling it.
+2. If bundling electron-updater ever causes trouble (dynamic requires, `.node` assets), the fallback is
+   to add `'electron-updater'` to esbuild's `external` array **and** keep it in `dependencies` so
+   electron-builder packs it into the asar from `node_modules`. Start bundled; only externalize if needed.
 
-> **Critical pitfall to encode in tests:** do **not** assert on the *compressed* file bytes. Brotli
-> recompression will almost never be byte-identical to the original (different encoder/quality). The
-> game reads the *decompressed* content, so assert round-trip equality at the **decompressed-buffer**
-> level, not the `.sav` level. Keep a couple of real `.sav` files as committed fixtures.
+---
+
+## electron-updater MUST Be a Runtime Dependency (not dev)
+
+This is the classic electron-updater footgun. Two independent reasons it lives in `dependencies`:
+
+- **It executes in the shipped app.** `autoUpdater.checkForUpdatesAndNotify()` runs in the main process
+  at runtime on the user's machine. Anything the running app imports must be a production dependency —
+  electron-builder prunes devDependencies out of the packaged asar. A devDependency electron-updater =
+  `Cannot find module 'electron-updater'` at runtime (unless bundled, per above — but do not rely on that
+  as the *reason*).
+- **latest.yml handshake.** electron-builder (build side) writes `latest.yml`; electron-updater (runtime
+  side) reads it. They must come from the same release lineage so their shared `builder-util-runtime`
+  (`9.7.0` for both `electron-builder@26.15.6` and `electron-updater@6.8.9`) agrees on the metadata
+  format. Keep electron-builder `26.x` paired with electron-updater `6.x`.
+
+Wiring point in the codebase: the updater is called from `electron/main.ts` (the trusted main process),
+inside `app.whenReady().then(...)` alongside `createWindow()` — e.g. `autoUpdater.checkForUpdatesAndNotify()`.
+It does not touch the renderer, preload, or the `save:*` IPC surface.
+
+---
+
+## Windows NSIS Target Specifics
+
+Recommended `build.win` + `build.nsis`:
+
+```jsonc
+"build": {
+  "win": {
+    "target": "nsis",
+    "icon": "build/icon.ico"        // 256x256 .ico REQUIRED for Windows
+  },
+  "nsis": {
+    "oneClick": true,               // simplest for a solo tester: silent install + auto-launch
+    "perMachine": false,            // per-USER install into %LOCALAPPDATA%\Programs — no UAC/admin
+    "allowToChangeInstallationDirectory": false,
+    "artifactName": "${productName}-${version}-setup.${ext}"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "jmptr",
+    "repo": "mv2-save-editor"
+  }
+}
+```
+
+Decision rationale:
+
+- **Why NSIS, not `portable`:** electron-updater's Windows path is built on the NSIS installer. NSIS is
+  what produces `latest.yml` + `.blockmap` and performs the in-place silent replace on update. `portable`
+  yields a single unmanaged `.exe` with **no** update wiring. NSIS is mandatory given the auto-update
+  requirement.
+- **`oneClick: true` vs assisted (`oneClick: false`):** For a single early-access tester, one-click is the
+  smoothest — no wizard, installs and launches automatically, and matches how electron-updater applies
+  updates silently. Choose assisted only if the user wants to pick an install directory.
+- **`perMachine: false` (per-user) matters for unsigned auto-update:** per-user installs into
+  `%LOCALAPPDATA%\Programs\...`, so the updater can overwrite the app **without admin elevation**. A
+  per-machine install would trigger a UAC prompt on every silent update — worse UX, worse still while
+  unsigned. Per-user (the default) is the right call here.
+- **`artifactName`:** give the installer a stable, predictable name. The default `"${productName} Setup
+  ${version}.exe"` contains a space; a hyphenated `-setup` name is cleaner for URLs/logs. Cosmetic.
+
+**Unsigned reality (already an accepted milestone decision):** with no code-signing cert, Windows
+SmartScreen shows an "unknown publisher" warning on first run, and updates are unsigned. electron-updater
+still works unsigned. Do **not** add `verifyUpdateCodeSignature`/signing config this milestone.
+
+---
+
+## GitHub Actions: Build + Publish on Tag
+
+Workflow shape (`.github/workflows/release.yml`):
+
+```yaml
+on:
+  push:
+    tags: ["v*"]           # build+publish only on version tags (e.g. v1.1.0)
+
+permissions:
+  contents: write          # REQUIRED: lets GITHUB_TOKEN create the release & upload assets
+
+jobs:
+  release:
+    runs-on: windows-latest        # NSIS builds reliably on Windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:electron          # esbuild → dist/  (electron-builder does NOT do this)
+      - run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # electron-builder reads GH_TOKEN (or GITHUB_TOKEN)
+```
+
+Key facts for the planner:
+
+- **Who uploads:** `electron-builder --publish always` does the uploading itself (via the `github`
+  publish provider). You do **not** need a separate `softprops/action-gh-release` / upload step. It
+  creates/updates the GitHub Release and attaches `MV2 Save Editor-<ver>-setup.exe`, `latest.yml`, and
+  the `.blockmap`.
+- **Token:** electron-builder authenticates via the `GH_TOKEN` env var (it also accepts `GITHUB_TOKEN`).
+  Map it from `secrets.GITHUB_TOKEN` — the auto-provisioned token is sufficient to publish to the same
+  repo. No personal access token needed for same-repo publishing.
+- **Permissions:** the workflow (or job) must declare `permissions: contents: write`. The default
+  `GITHUB_TOKEN` is read-only for `contents` in many repos; without this, asset upload 403s.
+- **Draft vs published:** by default electron-builder publishes as a **draft** release you then publish
+  manually. electron-updater only sees **non-draft** releases — so for fully automatic updates the tester
+  can pull, the release must end up published (either flip it manually, or configure the publish behavior).
+  Note this as a config decision in the phase, not a blocker.
+- **Build step ordering:** `npm run build:electron` MUST run before `electron-builder`. If `dist/` is
+  empty, electron-builder packages an empty app. Optionally add a chained npm script:
+  `"dist": "npm run build:electron && electron-builder --win --publish always"`.
+
+---
+
+## App Metadata electron-builder Needs
+
+| Field | Value | Why |
+|-------|-------|-----|
+| `appId` | `com.jmptr.mv2-save-editor` | Windows Application User Model ID / uninstall identity. Reverse-DNS. electron-builder warns loudly without it. |
+| `productName` | `MV2 Save Editor` | Installer name, Start-menu shortcut, install folder. Distinct from `package.json` `name` (`mv2-save-editor`). |
+| `build.win.icon` | `build/icon.ico` | **Windows requires a `.ico`** (ideally 256×256, multi-resolution). Without one you get the default Electron icon on the exe, shortcut, and installer. This is a real deliverable — an `.ico` asset must be produced. |
+| `directories.output` | `release` | Override the `dist` default to avoid colliding with esbuild output (see integration section). |
+| `directories.buildResources` | `build` | Where electron-builder auto-discovers `icon.ico`. |
+| `build.publish` | `{provider: github, owner: jmptr, repo: mv2-save-editor}` | Tells both electron-builder (where to upload) and electron-updater (where to poll) the same feed. Baked into the app at build time so the updater knows its feed. |
+
+---
+
+## Node Version (CI)
+
+- **Use Node 22.x LTS in CI.** Electron 43 bundles Node 22, and `scripts/build.mjs` already targets
+  `node22`. Matching CI to 22 keeps the esbuild output and any runtime assumptions consistent.
+- electron-builder itself only requires Node ≥ 14 (`engines.node: ">=14.0.0"`), so this is about
+  alignment, not a hard floor. Do not go below Node 20.
+
+---
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| Electron | Tauri (v2) | Only if public distribution + small bundle/memory become real goals (not v1). |
-| React | Svelte 5 / SolidJS | Fine if you prefer them; smaller virtualization ecosystem. React chosen for the strongest virtualization + form tooling. |
-| Hand-rolled Buffer reader | restructure / binary-parser | Only if v2 byte-insertion forces full re-serialization of large regions. |
-| electron-vite | Electron Forge (Vite + TS template) | If you want integrated packaging/publishing pipelines out of the box; heavier than needed for a dev tool. |
-| @tanstack/react-virtual | react-window / react-virtuoso | react-virtuoso if you want batteries-included list behavior (grouping, sticky) with less wiring; TanStack chosen for headless control + active perf work. |
-| Vitest | Jest / node:test | Vitest reuses the Vite pipeline (zero extra config). node:test is fine for a pure-Node parser package with no bundler. |
+| electron-builder | Electron Forge | Only if you want an integrated build+package+publish framework and are willing to restructure the build. Overkill/disruptive here: Forge would want to own the build, duplicating/replacing the working esbuild script. electron-builder layers cleanly on top of existing output. |
+| electron-updater (GitHub provider) | `update-electron-app` + `update.electronjs.org` | That combo is Forge/Squirrel-oriented and routes through Electron's hosted service; electron-updater talks to GitHub Releases directly and is the electron-builder-native path. Stick with electron-updater. |
+| NSIS oneClick per-user | NSIS assisted / perMachine | Assisted if the user must choose an install dir; perMachine only if multiple Windows users share one install (not this use case — and it costs a UAC prompt on every update). |
+| electron-builder `github` publish in CI | Manual `gh release upload` of the installer | Manual works but you'd have to also hand-craft `latest.yml`/`.blockmap` for the updater — error-prone. Let electron-builder generate + upload them atomically. |
 
-## What NOT to Use
+---
+
+## What NOT to Use / NOT to Do
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `brotli` / `iltorb` npm packages | Redundant native/WASM deps; Node core already ships Brotli | `zlib.brotliDecompressSync` / `brotliCompressSync` |
-| Browser `DecompressionStream` for Brotli | Supports gzip/deflate only — **not Brotli** | Node `zlib` in the main process |
-| kaitai-struct | Parse-only; cannot write/serialize saves | Hand-rolled Buffer reader/writer |
-| Full parse⇄serialize via restructure for v1 writes | Must reproduce byte-exact .NET output for untouched regions → corruption risk | In-place offset patching on the original buffer |
-| `Number` for int64 GP/Slayer Coins | Loses precision above 2^53 (quintillion-scale values) | `BigInt` via `readBigInt64LE`/`writeBigInt64LE` |
-| Redux/RTK, heavy state libs | Overkill for a single-window solo tool | React state / `useReducer` / tiny store |
-| `nodeIntegration: true` in the renderer | Unsafe pattern; not needed | Do binary/Brotli/file work in **main**, expose narrow IPC via `contextBridge` + `contextIsolation` |
+| Adopting **electron-forge** or **electron-vite** | The build already works (esbuild). Swapping build tooling to get packaging is a large, risky, unnecessary migration. | Layer electron-builder on top of the existing esbuild output. |
+| electron-updater as a **devDependency** | It runs in the shipped app; devDeps are pruned from the asar → runtime module-not-found. | Keep it in `dependencies`. |
+| `win.target: "portable"` (or zip/dir) | No auto-update integration; produces no `latest.yml`/`.blockmap`. | `win.target: "nsis"`. |
+| Leaving `directories.output` at the default `dist` | Collides with esbuild's `dist/` output directory. | Set `directories.output: "release"`. |
+| A **code-signing** pipeline / certificates | Explicitly out of scope for v1.1 (ship unsigned). Adds cost + complexity. | Ship unsigned; accept the SmartScreen prompt. |
+| `perMachine: true` while unsigned + auto-updating | Every silent update triggers a UAC elevation prompt. | `perMachine: false` (per-user). |
+| A separate GH-release upload action | electron-builder already uploads via `--publish always`; a second uploader can clobber or duplicate assets. | Let electron-builder publish. |
+| `electron-builder@latest` blindly | npm's `latest` dist-tag is held at **26.15.3**, while **26.15.6** (newer, under the `v26` tag) exists. `npm i -D electron-builder` gives you the older one. | Pin `electron-builder@26.15.6` explicitly. |
+| macOS/Linux targets this milestone | Windows-only decision; adds signing/notarization concerns and CI matrix cost. | `--win` only. |
 
-## Stack Patterns by Variant
-
-**If distribution to other users ever becomes a goal:**
-- Re-evaluate Tauri v2; keep the parser as portable TS (no Node-only APIs in the core) so it can move
-  to a WASM-Brotli webview build.
-- Add electron-builder (or Tauri bundler) with code signing.
-
-**If v2 adds new items/entities (byte insertion):**
-- Extend the hand-rolled writer to recompute entity **region byte-length prefixes** after insertion;
-  add tests that re-parse the full entity list and verify sizes. Do not reach for a generic schema lib
-  first — you need explicit control of region prefixes.
-
-**If the UI grows beyond browse+edit (bulk ops, diffs):**
-- Consider react-virtuoso for richer list semantics; add a diff/preview model over the field-descriptor
-  list.
-
-## Architecture Note (feeds ARCHITECTURE.md)
-
-Keep a clean process split: **main process = Node** (fs read/write, Brotli, parse, patch, validate);
-**renderer = React UI**; **preload = `contextBridge`** exposing a narrow, typed IPC surface
-(`loadSave(path) → { summary, fields }`, `writeSave(edits, outPath)`). Never expose raw `fs`/`Buffer`
-to the renderer. This keeps the corruption-sensitive binary logic in one testable Node module,
-independent of the UI.
+---
 
 ## Version Compatibility
 
-| Package | Compatible With | Notes |
-|---------|-----------------|-------|
-| electron-vite `5.x` | Vite `7.x`, Electron `43.x` | Scaffold pins a working matrix; don't upgrade Vite past what electron-vite supports. |
-| Vitest `4.1.x` | Vite `7.x` | Vitest 4 aligns with Vite 7; share one config. |
-| Electron `43.x` | Node 22 / Chromium (bundled) | Node version is whatever this Electron bundles — `Buffer`/`zlib` APIs used here are long-stable. |
-| @tanstack/react-virtual `3.14.x` | React `19.x` | Framework-native adapter. |
+| Package | Version | Compatible With | Notes |
+|---------|---------|-----------------|-------|
+| electron-builder | `26.15.6` | Electron `43.0.0` | electron-builder is Electron-version-agnostic; autodetects from the installed `electron` devDep. 26.x handles Electron 43 fine. |
+| electron-updater | `6.8.9` | electron-builder `26.x` | Both depend on `builder-util-runtime@9.7.0` — the shared metadata/`latest.yml` contract. Keep 26.x ↔ 6.x paired; do not mix a 27.x builder with a 6.x updater. |
+| electron-builder | `26.15.6` | Node ≥ 14 (CI on 22) | `engines.node: ">=14.0.0"`. Run CI on Node 22 to match Electron 43 / esbuild target. |
+| esbuild build | `dist/main.js` bundles electron-updater | electron-updater `6.8.9` | electron-updater is CJS and bundles cleanly; if it ever doesn't, externalize it and let electron-builder pack it from node_modules. |
+
+> **Beta channels available but NOT recommended:** `electron-builder@27.0.0-alpha.5` and
+> `electron-updater@7.0.0-alpha.4` exist (June 2026). Stay on the stable 26.x / 6.x line for a shipping
+> tool.
+
+---
 
 ## Sources
 
-- [Electron releases](https://releases.electronjs.org/) — latest stable **43.0.0**; support = latest 3 majors (41–43). HIGH
-- [electron-vite](https://electron-vite.org/) / [create-electron-vite](https://github.com/electron-vite/create-electron-vite) — latest **5.0.0**, TS/React/Vue/Svelte/Solid scaffolds. HIGH
-- [@tanstack/react-virtual (npm)](https://www.npmjs.com/package/@tanstack/react-virtual) — latest **3.14.5**; 2026 perf release. HIGH
-- [Vitest](https://vitest.dev/) / [npm](https://www.npmjs.com/package/vitest) — latest **4.1.x**, Vite-native. HIGH
-- [restructure (npm)](https://www.npmjs.com/package/restructure) & [binary-parser (npm)](https://www.npmjs.com/package/binary-parser) — declarative parse/serialize libs; evaluated and set aside for in-place patching. HIGH
-- Node.js `zlib` Brotli + `Buffer` LE read/write APIs — Node core (LTS). HIGH (training-knowledge, stable API)
-- `docs/current-skill.md` (in-repo) — authoritative save-format spec: layout, primitives, offset math, XP table. HIGH
-- React 19 / Vite 7 / TypeScript 5.9 versions — HIGH confidence from ecosystem signals (Vitest 4↔Vite 7, react-virtual↔React 19); pin exact minors from `npm` at install time.
+- npm registry (verified live 2026-07-09): `electron-builder` latest published `26.15.6` (dist-tag `v26`; `latest` tag lags at `26.15.3`), `next` = `27.0.0-alpha.5`. HIGH
+- npm registry (verified live 2026-07-09): `electron-updater` latest `6.8.9` (2026-06-05), `next` = `7.0.0-alpha.4`. HIGH
+- npm metadata (verified live): `electron-builder@26.15.6` `engines.node ">=14.0.0"`; both `electron-builder@26.15.6` and `electron-updater@6.8.9` depend on `builder-util-runtime@9.7.0` (the compatibility linchpin). HIGH
+- electron-builder docs — NSIS target options (`oneClick`, `perMachine`, `artifactName`), `directories.output` default `dist`, `github` publish provider, `--publish always`, `GH_TOKEN`. HIGH (stable, long-documented behavior; from training knowledge, not re-fetched live — flagged accordingly)
+- electron-updater docs — GitHub Releases feed, `latest.yml` handshake, runtime-dependency requirement. HIGH (training knowledge; stable API)
+- In-repo `package.json`, `scripts/build.mjs`, `electron/main.ts` — confirmed esbuild output layout (`dist/main.js|preload.js|renderer.js|index.html`), `main: "dist/main.js"`, `type: "commonjs"`, `external: ['electron']`, bundled renderer deps, `app.whenReady()` wiring point. HIGH (direct file read)
 
 ---
-*Stack research for: local desktop binary save-file editor (MV2 `.sav`)*
-*Researched: 2026-07-03*
+*Stack research for: Electron packaging & GitHub-Releases auto-update distribution (Windows NSIS) — v1.1*
+*Researched: 2026-07-09*
